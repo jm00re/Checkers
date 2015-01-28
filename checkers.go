@@ -16,6 +16,7 @@ type Board struct {
 	whiteDiscs uint32
 	blackKings uint32
 	whiteKings uint32
+	occupied   uint32
 }
 
 // Bitmasks
@@ -24,35 +25,56 @@ var removeLeft uint32
 var removeFront uint32
 var removeBack uint32
 
+var removeLeftTwo uint32
+var removeRightTwo uint32
+
 func main() {
 	// Bitmask declaration
 	removeLeft = 0xefefefef
 	removeRight = 0xf7f7f7f7
 	removeFront = 0xfffffff
 	removeBack = 0xfffffff0
+	removeRightTwo = 0x77777777
+	removeLeftTwo = 0xeeeeeeee
 
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	//fmt.Printf("%b\n", b.whiteKings)
+	//fmt.Printf("%b\n", b.blackDiscs)
 	//PrintBoard(b)
 	//fmt.Println()
-	//PrintBitBoard(b.whiteKings)
-	//,fmt.Println()
-	BlackDiscMoves(b)
+	//PrintBitBoard(b.blackDiscs & removeLeft)
+	//fmt.Println()
+	//BlackDiscMoves(b)
+	//fmt.Println()
+	//WhiteDiscMoves(b)
+	BlackDiscCaptures(b)
+	fmt.Println()
 }
 
 func BlackDiscMoves(b Board) (moves uint32) {
-	occupied := (b.blackDiscs | b.whiteDiscs | b.blackKings | b.whiteKings)
 	// For Left move:
 	// Remove  leftmost discs (Can't move left)
 	// Shift remaining discs left
 	// AND NOT against occupied location (Can't move into occupied spot)
 	// Repeat for right move
 	// OR two groups together
-	moves = (((b.blackDiscs & removeLeft) << 4) &^ occupied) | (((b.blackDiscs & removeRight) << 5) &^ occupied)
+	moves = (((b.blackDiscs & removeLeft) << 4) &^ b.occupied) | (((b.blackDiscs & removeRight) << 5) &^ b.occupied)
+	return
+}
+
+func BlackDiscCaptures(b Board) (moves uint32) {
+	// The first half check if an opposing piece is diagonal,
+	// then check if there is a black space open beyond that
+	// Need to reduce the shift count 1 one because you're moving one less position in the second row
+	moves = (((((b.blackDiscs & removeRightTwo) << 5) & b.whiteDiscs) << 4) &^ b.occupied) |
+		(((((b.blackDiscs & removeLeftTwo) << 4) & b.whiteDiscs) << 3) &^ b.occupied)
+	return
+}
+
+func WhiteDiscMoves(b Board) (moves uint32) {
+	// Reverse shifts from BlackDiscMoves
+	moves = (((b.whiteDiscs & removeRight) >> 4) &^ b.occupied) | (((b.whiteDiscs & removeLeft) >> 5) &^ b.occupied)
 	PrintBitBoard(moves)
-	//fmt.Println()
-	//PrintBitBoard(occupied)
 	return
 }
 
@@ -151,6 +173,7 @@ func GenerateBoard(player bool, board [64]uint8) (b Board) {
 		}
 	}
 	b.player = player
+	b.occupied = (b.blackDiscs | b.whiteDiscs | b.blackKings | b.whiteKings)
 	return
 }
 
