@@ -22,33 +22,31 @@ type Board struct {
 // Bitmasks
 var removeRight uint32
 var removeLeft uint32
-var removeFront uint32
-var removeBack uint32
-
 var removeLeftTwo uint32
 var removeRightTwo uint32
+var removeFront uint32
+var removeBack uint32
+var keepFront uint32
+var keepBack uint32
 
 func main() {
 	// Bitmask declaration
 	removeLeft = 0xefefefef
 	removeRight = 0xf7f7f7f7
-	removeFront = 0xfffffff
-	removeBack = 0xfffffff0
 	removeRightTwo = 0x77777777
 	removeLeftTwo = 0xeeeeeeee
+	removeFront = 0xfffffff
+	removeBack = 0xfffffff0
+	keepFront = 0xf
+	keepFront = 0xf0000000
 
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	//fmt.Printf("%b\n", b.blackDiscs)
-	//PrintBoard(b)
-	//fmt.Println()
-	//PrintBitBoard(b.blackDiscs & removeLeft)
-	//fmt.Println()
-	//BlackDiscMoves(b)
-	//fmt.Println()
-	//WhiteDiscMoves(b)
 	BlackDiscCaptures(b)
+	WhiteDiscCaptures(b)
 	fmt.Println()
+	fmt.Println(PopCount(b.blackDiscs))
+	fmt.Println(PopCount(b.whiteDiscs))
 }
 
 func BlackDiscMoves(b Board) (moves uint32) {
@@ -74,7 +72,26 @@ func BlackDiscCaptures(b Board) (moves uint32) {
 func WhiteDiscMoves(b Board) (moves uint32) {
 	// Reverse shifts from BlackDiscMoves
 	moves = (((b.whiteDiscs & removeRight) >> 4) &^ b.occupied) | (((b.whiteDiscs & removeLeft) >> 5) &^ b.occupied)
+	//PrintBitBoard(moves)
+	return
+}
+
+func WhiteDiscCaptures(b Board) (moves uint32) {
+	// The first half check if an opposing piece is diagonal,
+	// then check if there is a black space open beyond that
+	// Need to reduce the shift count 1 one because you're moving one less position in the second row
+	moves = (((((b.whiteDiscs & removeLeftTwo) >> 4) & b.blackDiscs) >> 3) &^ b.occupied) |
+		(((((b.whiteDiscs & removeRightTwo) >> 5) & b.blackDiscs) >> 4) &^ b.occupied)
 	PrintBitBoard(moves)
+	return
+}
+
+// Returns the number of set bits in b
+func PopCount(b uint32) (count uint8) {
+	for b != 0 {
+		b &= (b - 1)
+		count += 1
+	}
 	return
 }
 
