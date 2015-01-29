@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+// I think I'm going to add a lot more bitboards to this:
+// Even and Odd row variants of all the pieces
+// All of the black/white pieces
+// The pieces without the far left or right black squares
+// Calculating each bitboard once per board and just looking them up might be way more efficient
 type Board struct {
 	player     bool
 	blackDiscs uint32
@@ -20,70 +25,84 @@ type Board struct {
 }
 
 // Bitmasks
-var removeRight uint32
-var removeLeft uint32
-var removeLeftTwo uint32
-var removeRightTwo uint32
-var removeFront uint32
-var removeBack uint32
-var keepFront uint32
-var keepBack uint32
+const removeLeft uint32 = 0xefefefef
+const removeRight uint32 = 0xf7f7f7f7
+const removeRightTwo uint32 = 0x77777777
+const removeLeftTwo uint32 = 0xeeeeeeee
+const removeFront uint32 = 0xfffffff
+const removeBack uint32 = 0xfffffff0
+const keepFront uint32 = 0xf
+const keepBack uint32 = 0xf0000000
+const evenRows uint32 = 0xf0f0f0f
+const oddRows uint32 = 0xf0f0f0f0
 
 func main() {
 	// Bitmask declaration
-	removeLeft = 0xefefefef
-	removeRight = 0xf7f7f7f7
-	removeRightTwo = 0x77777777
-	removeLeftTwo = 0xeeeeeeee
-	removeFront = 0xfffffff
-	removeBack = 0xfffffff0
-	keepFront = 0xf
-	keepFront = 0xf0000000
-
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	BlackDiscCaptures(b)
-	WhiteDiscCaptures(b)
+	PrintBoardWithBitBoard(b, BlackDiscCaptures(b))
 	fmt.Println()
-	fmt.Println(PopCount(b.blackDiscs))
-	fmt.Println(PopCount(b.whiteDiscs))
+	PrintBitBoard(BlackDiscCaptures(b))
+	fmt.Println()
+	PrintBoardWithBitBoard(b, WhiteDiscCaptures(b))
+	fmt.Println()
 }
 
-func BlackDiscMoves(b Board) (moves uint32) {
-	// For Left move:
-	// Remove  leftmost discs (Can't move left)
-	// Shift remaining discs left
-	// AND NOT against occupied location (Can't move into occupied spot)
-	// Repeat for right move
-	// OR two groups together
-	moves = (((b.blackDiscs & removeLeft) << 4) &^ b.occupied) | (((b.blackDiscs & removeRight) << 5) &^ b.occupied)
-	return
+func BlackDiscMoves(b Board) uint32 {
+	// So basically I'm taking advantage of masking the off rows,
+	// Performing a shift and then doing it again for the other rows
+	// After all the potential moves have been calc'd I mask the taken spaces
+	// I messed this up orginally and didn't realize I needed to shift the rows differently
+	return (((b.blackDiscs & removeLeft & oddRows) << 3) |
+		((b.blackDiscs & oddRows) << 4) |
+		((b.blackDiscs & evenRows) << 4) |
+		((b.blackDiscs & removeRight & evenRows) << 5)) &^ b.occupied
 }
 
-func BlackDiscCaptures(b Board) (moves uint32) {
+func BlackDiscCaptures(b Board) uint32 {
 	// The first half check if an opposing piece is diagonal,
 	// then check if there is a black space open beyond that
-	// Need to reduce the shift count 1 one because you're moving one less position in the second row
-	moves = (((((b.blackDiscs & removeRightTwo) << 5) & b.whiteDiscs) << 4) &^ b.occupied) |
-		(((((b.blackDiscs & removeLeftTwo) << 4) & b.whiteDiscs) << 3) &^ b.occupied)
-	return
+	return (((((b.blackDiscs & removeLeftTwo & evenRows) << 4) &
+		(b.whiteDiscs | b.whiteKings)) << 3) |
+		((((b.blackDiscs & removeLeftTwo & oddRows) << 3) &
+			(b.whiteDiscs | b.whiteKings)) << 4) |
+		((((b.blackDiscs & removeRightTwo & evenRows) << 5) &
+			(b.whiteDiscs | b.whiteKings)) << 4) |
+		((((b.blackDiscs & removeRightTwo & oddRows) << 4) &
+			(b.whiteDiscs | b.whiteKings)) << 5)) &^ b.occupied
+
 }
 
-func WhiteDiscMoves(b Board) (moves uint32) {
-	// Reverse shifts from BlackDiscMoves
-	moves = (((b.whiteDiscs & removeRight) >> 4) &^ b.occupied) | (((b.whiteDiscs & removeLeft) >> 5) &^ b.occupied)
-	//PrintBitBoard(moves)
-	return
+func WhiteDiscMoves(b Board) uint32 {
+	// Same dealie as BlackDiscMoves
+	return (((b.whiteDiscs & oddRows) >> 4) |
+		((b.whiteDiscs & removeLeft & oddRows) >> 5) |
+		((b.whiteDiscs & removeRight & evenRows) >> 3) |
+		((b.whiteDiscs & evenRows) >> 4)) &^ b.occupied
 }
 
-func WhiteDiscCaptures(b Board) (moves uint32) {
-	// The first half check if an opposing piece is diagonal,
-	// then check if there is a black space open beyond that
-	// Need to reduce the shift count 1 one because you're moving one less position in the second row
-	moves = (((((b.whiteDiscs & removeLeftTwo) >> 4) & b.blackDiscs) >> 3) &^ b.occupied) |
-		(((((b.whiteDiscs & removeRightTwo) >> 5) & b.blackDiscs) >> 4) &^ b.occupied)
-	PrintBitBoard(moves)
-	return
+func WhiteDiscCaptures(b Board) uint32 {
+	// Same dealie as BlackDiscCaptures
+	return (((((b.whiteDiscs & removeLeftTwo & evenRows) >> 4) &
+		(b.blackDiscs | b.blackKings)) >> 5) |
+		((((b.whiteDiscs & removeLeftTwo & oddRows) >> 5) &
+			(b.blackDiscs | b.blackKings)) >> 4) |
+		((((b.whiteDiscs & removeRightTwo & evenRows) >> 3) &
+			(b.blackDiscs | b.blackKings)) >> 4) |
+		((((b.whiteDiscs & removeRightTwo & oddRows) >> 4) &
+			(b.blackDiscs | b.blackKings)) >> 3)) &^ b.occupied
+}
+
+func NewBlackKings(b uint32) uint32 {
+	return b & keepBack
+}
+
+func NewWhiteKings(b uint32) uint32 {
+	return b & keepFront
+}
+
+func WhiteKingMoves(b Board) (moves uint32) {
+	return 0
 }
 
 // Returns the number of set bits in b
@@ -103,7 +122,8 @@ func PrintBitBoard(b uint32) {
 		if i%4 == 0 {
 			fmt.Println()
 		}
-		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) || (i >= 16 && i <= 19) || (i >= 24 && i <= 27) {
+		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) ||
+			(i >= 16 && i <= 19) || (i >= 24 && i <= 27) {
 			fmt.Print("_")
 			if (b>>shift)&1 != 0 {
 				fmt.Print("x")
@@ -112,6 +132,55 @@ func PrintBitBoard(b uint32) {
 			}
 		} else {
 			if (b>>shift)&1 != 0 {
+				fmt.Print("x")
+			} else {
+				fmt.Print("_")
+			}
+			fmt.Print("_")
+		}
+	}
+}
+
+func PrintBoardWithBitBoard(b Board, b2 uint32) {
+	// Shifts by i and checks if the value is 1.
+	// Prints the correct indictor based on the bitboard used
+	if b.player {
+		fmt.Print("b")
+	} else {
+		fmt.Print("w")
+	}
+	var shift uint8
+	for i := 0; i < 32; i++ {
+		shift = uint8(i)
+		if i%4 == 0 {
+			fmt.Println()
+		}
+		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) ||
+			(i >= 16 && i <= 19) || (i >= 24 && i <= 27) {
+			fmt.Print("_")
+			if (b.blackDiscs>>shift)&1 != 0 {
+				fmt.Print("b")
+			} else if (b.whiteDiscs>>shift)&1 != 0 {
+				fmt.Print("w")
+			} else if (b.blackKings>>shift)&1 != 0 {
+				fmt.Print("B")
+			} else if (b.whiteKings>>shift)&1 != 0 {
+				fmt.Print("W")
+			} else if (b2>>shift)&1 != 0 {
+				fmt.Print("x")
+			} else {
+				fmt.Print("_")
+			}
+		} else {
+			if (b.blackDiscs>>shift)&1 != 0 {
+				fmt.Print("b")
+			} else if (b.whiteDiscs>>shift)&1 != 0 {
+				fmt.Print("w")
+			} else if (b.blackKings>>shift)&1 != 0 {
+				fmt.Print("B")
+			} else if (b.whiteKings>>shift)&1 != 0 {
+				fmt.Print("W")
+			} else if (b2>>shift)&1 != 0 {
 				fmt.Print("x")
 			} else {
 				fmt.Print("_")
@@ -135,7 +204,8 @@ func PrintBoard(b Board) {
 		if i%4 == 0 {
 			fmt.Println()
 		}
-		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) || (i >= 16 && i <= 19) || (i >= 24 && i <= 27) {
+		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) ||
+			(i >= 16 && i <= 19) || (i >= 24 && i <= 27) {
 			fmt.Print("_")
 			if (b.blackDiscs>>shift)&1 != 0 {
 				fmt.Print("b")
@@ -169,7 +239,8 @@ func GenerateBoard(player bool, board [64]uint8) (b Board) {
 	// Read STDIN into a parseable format
 	var reducedBoard [32]uint8
 	for i := 0; i < 32; i++ {
-		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) || (i >= 16 && i <= 19) || (i >= 24 && i <= 27) {
+		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) ||
+			(i >= 16 && i <= 19) || (i >= 24 && i <= 27) {
 			reducedBoard[i] = board[(i*2)+1]
 		} else {
 			reducedBoard[i] = board[i*2]
