@@ -16,12 +16,17 @@ import (
 // The pieces without the far left or right black squares
 // Calculating each bitboard once per board and just looking them up might be way more efficient
 type Board struct {
-	player     bool
-	blackDiscs uint32
-	whiteDiscs uint32
-	blackKings uint32
-	whiteKings uint32
-	occupied   uint32
+	player bool
+
+	blackDiscs  uint32
+	blackKings  uint32
+	blackPieces uint32
+
+	whiteDiscs  uint32
+	whiteKings  uint32
+	whitePieces uint32
+
+	occupied uint32
 }
 
 // Bitmasks
@@ -29,8 +34,8 @@ const removeLeft uint32 = 0xefefefef
 const removeRight uint32 = 0xf7f7f7f7
 const removeRightTwo uint32 = 0x77777777
 const removeLeftTwo uint32 = 0xeeeeeeee
-const removeFront uint32 = 0xfffffff
-const removeBack uint32 = 0xfffffff0
+const removeBack uint32 = 0xfffffff
+const removeFront uint32 = 0xfffffff0
 const keepFront uint32 = 0xf
 const keepBack uint32 = 0xf0000000
 const evenRows uint32 = 0xf0f0f0f
@@ -45,6 +50,10 @@ func main() {
 	PrintBitBoard(BlackDiscCaptures(b))
 	fmt.Println()
 	PrintBoardWithBitBoard(b, WhiteDiscCaptures(b))
+	fmt.Println()
+	PrintBoardWithBitBoard(b, BlackKingMoves(b))
+	fmt.Println()
+	PrintBoardWithBitBoard(b, WhiteKingMoves(b))
 	fmt.Println()
 }
 
@@ -63,14 +72,13 @@ func BlackDiscCaptures(b Board) uint32 {
 	// The first half check if an opposing piece is diagonal,
 	// then check if there is a black space open beyond that
 	return (((((b.blackDiscs & removeLeftTwo & evenRows) << 4) &
-		(b.whiteDiscs | b.whiteKings)) << 3) |
+		(b.whitePieces)) << 3) |
 		((((b.blackDiscs & removeLeftTwo & oddRows) << 3) &
-			(b.whiteDiscs | b.whiteKings)) << 4) |
+			(b.whitePieces)) << 4) |
 		((((b.blackDiscs & removeRightTwo & evenRows) << 5) &
-			(b.whiteDiscs | b.whiteKings)) << 4) |
+			(b.whitePieces)) << 4) |
 		((((b.blackDiscs & removeRightTwo & oddRows) << 4) &
-			(b.whiteDiscs | b.whiteKings)) << 5)) &^ b.occupied
-
+			(b.whitePieces)) << 5)) &^ b.occupied
 }
 
 func WhiteDiscMoves(b Board) uint32 {
@@ -84,13 +92,41 @@ func WhiteDiscMoves(b Board) uint32 {
 func WhiteDiscCaptures(b Board) uint32 {
 	// Same dealie as BlackDiscCaptures
 	return (((((b.whiteDiscs & removeLeftTwo & evenRows) >> 4) &
-		(b.blackDiscs | b.blackKings)) >> 5) |
+		(b.blackPieces)) >> 5) |
 		((((b.whiteDiscs & removeLeftTwo & oddRows) >> 5) &
-			(b.blackDiscs | b.blackKings)) >> 4) |
+			(b.blackPieces)) >> 4) |
 		((((b.whiteDiscs & removeRightTwo & evenRows) >> 3) &
-			(b.blackDiscs | b.blackKings)) >> 4) |
+			(b.blackPieces)) >> 4) |
 		((((b.whiteDiscs & removeRightTwo & oddRows) >> 4) &
-			(b.blackDiscs | b.blackKings)) >> 3)) &^ b.occupied
+			(b.blackPieces)) >> 3)) &^ b.occupied
+}
+
+func BlackKingMoves(b Board) uint32 {
+	if b.blackKings != 0 {
+		return (((b.blackKings & evenRows) << 4) |
+			((b.blackKings & removeRight & evenRows) << 5) |
+			((b.blackKings & removeRight & evenRows) >> 3) |
+			((b.blackKings & evenRows) >> 4) |
+			((b.blackKings & removeLeft & oddRows) << 3) |
+			((b.blackKings & oddRows) << 4) |
+			((b.blackKings & oddRows) >> 4) |
+			((b.blackKings & removeLeft & oddRows) >> 5)) &^ b.occupied
+	}
+	return 0
+}
+
+func WhiteKingMoves(b Board) uint32 {
+	if b.whiteKings != 0 {
+		return (((b.whiteKings & evenRows) << 4) |
+			((b.whiteKings & removeRight & evenRows) << 5) |
+			((b.whiteKings & removeRight & evenRows) >> 3) |
+			((b.whiteKings & evenRows) >> 4) |
+			((b.whiteKings & removeLeft & oddRows) << 3) |
+			((b.whiteKings & oddRows) << 4) |
+			((b.whiteKings & oddRows) >> 4) |
+			((b.whiteKings & removeLeft & oddRows) >> 5)) &^ b.occupied
+	}
+	return 0
 }
 
 func NewBlackKings(b uint32) uint32 {
@@ -99,10 +135,6 @@ func NewBlackKings(b uint32) uint32 {
 
 func NewWhiteKings(b uint32) uint32 {
 	return b & keepFront
-}
-
-func WhiteKingMoves(b Board) (moves uint32) {
-	return 0
 }
 
 // Returns the number of set bits in b
@@ -262,6 +294,8 @@ func GenerateBoard(player bool, board [64]uint8) (b Board) {
 	}
 	b.player = player
 	b.occupied = (b.blackDiscs | b.whiteDiscs | b.blackKings | b.whiteKings)
+	b.blackPieces = (b.blackDiscs | b.blackKings)
+	b.whitePieces = (b.whiteDiscs | b.whiteKings)
 	return
 }
 
