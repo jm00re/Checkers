@@ -6,9 +6,11 @@ import (
 	//"github.com/davecheney/profile"
 	//"math"
 	"os"
-	//"strconv"
+	"strconv"
 	"strings"
 )
+
+// TODO To calc the actual move xor new board with old board.
 
 // I think I'm going to add a lot more bitboards to this:
 // Even and Odd row variants of all the pieces
@@ -41,20 +43,78 @@ const keepBack uint32 = 0xf0000000
 const evenRows uint32 = 0xf0f0f0f
 const oddRows uint32 = 0xf0f0f0f0
 
+// Bitscan msv lookup table
+var bitscanLookup = [32]uint8{0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30, 8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31}
+
 func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	PrintBoardWithBitBoard(b, BlackDiscCaptures(b))
+	//PrintBoardWithBitBoard(b, BlackDiscCaptures(b))
+	//fmt.Println()
+	//PrintBitBoard(WhiteDiscMoves(b))
+	//fmt.Println()
+	//PrintBoardWithBitBoard(b, WhiteDiscMoves(b))
+	//fmt.Println()
+	//fmt.Println("%b", b.whiteDiscs)
+	//fmt.Println(strconv.FormatInt(int64(b.whiteDiscs), 2))
+	//fmt.Println()
+	//PrintBoardWithBitBoard(b, WhiteDiscCaptures(b))
+	//fmt.Println()
+	//PrintBoardWithBitBoard(b, BlackKingMoves(b))
+	//fmt.Println()
+	//PrintBoardWithBitBoard(b, WhiteKingMoves(b))
+	//fmt.Println()
+	//PrintOn(WhiteKingMoves(b))
+
+	//fmt.Println()
+	//fmt.Println(Bitscan(b.blackDiscs))
+	//fmt.Println()
+	PrintOn(b.blackDiscs)
+	PrintBoardWithBitBoard(b, BlackDiscMoves(b))
 	fmt.Println()
-	PrintBitBoard(BlackDiscCaptures(b))
+	fmt.Println(strconv.FormatInt(int64(b.blackDiscs), 2))
 	fmt.Println()
-	PrintBoardWithBitBoard(b, WhiteDiscCaptures(b))
+	PrintBitBoard(DownRightMoveSource(b.blackDiscs, BlackDiscMoves(b)))
 	fmt.Println()
-	PrintBoardWithBitBoard(b, BlackKingMoves(b))
+	PrintBitBoard(DownLeftMoveSource(b.blackDiscs, BlackDiscMoves(b)))
 	fmt.Println()
-	PrintBoardWithBitBoard(b, WhiteKingMoves(b))
 	fmt.Println()
+	PrintBoardWithBitBoard(b, WhiteDiscMoves(b))
+	fmt.Println()
+	fmt.Println(strconv.FormatInt(int64(b.whiteDiscs), 2))
+	fmt.Println()
+	PrintBitBoard(UpRightMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
+	fmt.Println()
+	PrintBitBoard(UpLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
+	fmt.Println()
+	//PrintBitBoard(DownLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
+	//fmt.Println(strconv.FormatInt(int64(b.blackDiscs^(b.blackDiscs-1)), 2))
+}
+
+// There's probably a better way to do this. Just going to give this a try.
+// Take two uint32 (the potential moves and were the pieces are)
+// shift the move backwards and & with the board to produce a new bitboard with only black pieces
+// that can make moves
+// This new bitboard can be bitscanned to actually make the moves for the AI
+// bb1 is board, bb2 is move bitboard
+func DownRightMoveSource(bb1 uint32, bb2 uint32) uint32 {
+	return (((bb2 & oddRows & removeLeft) >> 5) |
+		((bb2 & evenRows) >> 4)) & bb1
+}
+
+func DownLeftMoveSource(bb1 uint32, bb2 uint32) uint32 {
+	return (((bb2 & evenRows & removeRight) >> 3) |
+		((bb2 & oddRows) >> 4)) & bb1
+}
+func UpLeftMoveSource(bb1 uint32, bb2 uint32) uint32 {
+	return (((bb2 & oddRows) << 4) |
+		((bb2 & evenRows & removeRight) << 5)) & bb1
+}
+
+func UpRightMoveSource(bb1 uint32, bb2 uint32) uint32 {
+	return (((bb2 & evenRows) << 4) |
+		((bb2 & evenRows & removeLeft) << 3)) & bb1
 }
 
 func BlackDiscMoves(b Board) uint32 {
@@ -137,7 +197,23 @@ func NewWhiteKings(b uint32) uint32 {
 	return b & keepFront
 }
 
+// I straight up stole this from Kim Walisch ala https://chessprogramming.wikispaces.com/Kim+Walisch
+// Returns the index of the lsb
+func Bitscan(b uint32) uint8 {
+	return bitscanLookup[((b^(b-1))*0x07C4ACDD)>>27]
+}
+
+func PrintOn(b uint32) {
+	temp := Bitscan(b)
+	for b != 0 {
+		fmt.Println(temp)
+		b ^= 1 << temp
+		temp = Bitscan(b)
+	}
+}
+
 // Returns the number of set bits in b
+// Taken from wikipedia
 func PopCount(b uint32) (count uint8) {
 	for b != 0 {
 		b &= (b - 1)
