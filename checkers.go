@@ -50,46 +50,44 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	//PrintBoardWithBitBoard(b, BlackDiscCaptures(b))
-	//fmt.Println()
-	//PrintBitBoard(WhiteDiscMoves(b))
-	//fmt.Println()
-	//PrintBoardWithBitBoard(b, WhiteDiscMoves(b))
-	//fmt.Println()
-	//fmt.Println("%b", b.whiteDiscs)
-	//fmt.Println(strconv.FormatInt(int64(b.whiteDiscs), 2))
-	//fmt.Println()
-	//PrintBoardWithBitBoard(b, WhiteDiscCaptures(b))
-	//fmt.Println()
-	//PrintBoardWithBitBoard(b, BlackKingMoves(b))
-	//fmt.Println()
-	//PrintBoardWithBitBoard(b, WhiteKingMoves(b))
-	//fmt.Println()
-	//PrintOn(WhiteKingMoves(b))
-
-	//fmt.Println()
-	//fmt.Println(Bitscan(b.blackDiscs))
-	//fmt.Println()
 	PrintOn(b.blackDiscs)
 	PrintBoardWithBitBoard(b, BlackDiscMoves(b))
 	fmt.Println()
 	fmt.Println(strconv.FormatInt(int64(b.blackDiscs), 2))
-	fmt.Println()
+	fmt.Println("DownRight")
 	PrintBitBoard(DownRightMoveSource(b.blackDiscs, BlackDiscMoves(b)))
-	fmt.Println()
+	fmt.Println("DownLeft")
 	PrintBitBoard(DownLeftMoveSource(b.blackDiscs, BlackDiscMoves(b)))
 	fmt.Println()
 	fmt.Println()
 	PrintBoardWithBitBoard(b, WhiteDiscMoves(b))
 	fmt.Println()
 	fmt.Println(strconv.FormatInt(int64(b.whiteDiscs), 2))
-	fmt.Println()
+	fmt.Println("UpRight")
 	PrintBitBoard(UpRightMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
-	fmt.Println()
+	fmt.Println("UpLeft")
 	PrintBitBoard(UpLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
 	fmt.Println()
-	//PrintBitBoard(DownLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
-	//fmt.Println(strconv.FormatInt(int64(b.blackDiscs^(b.blackDiscs-1)), 2))
+	temp := UpLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b))
+	PrintBitBoard(MoveDownRight(Bitscan(temp), temp))
+	fmt.Println()
+}
+
+func MoveDownRight(move uint8, bb uint32) uint32 {
+	return (((((1 << move) & oddRows) << 4) |
+		(((1 << move) & evenRows & removeRight) << 5)) | bb) ^ (1 << move)
+}
+
+func MoveDownLeft(uint8 move, uin32 bb) uint32 {
+	return (((((1 << move) & evenRows) << 4) |
+		(((1 << move) & oddRows & removeLeft) << 3)) | bb1) ^ (1 << move)
+}
+
+func MoveUpLeft(uint8 move, uin32 bb) uint32 {
+	return 0
+}
+func MoveUpRight(uint8 move, uin32 bb) uint32 {
+	return 0
 }
 
 // There's probably a better way to do this. Just going to give this a try.
@@ -107,6 +105,7 @@ func DownLeftMoveSource(bb1 uint32, bb2 uint32) uint32 {
 	return (((bb2 & evenRows & removeRight) >> 3) |
 		((bb2 & oddRows) >> 4)) & bb1
 }
+
 func UpLeftMoveSource(bb1 uint32, bb2 uint32) uint32 {
 	return (((bb2 & oddRows) << 4) |
 		((bb2 & evenRows & removeRight) << 5)) & bb1
@@ -114,7 +113,7 @@ func UpLeftMoveSource(bb1 uint32, bb2 uint32) uint32 {
 
 func UpRightMoveSource(bb1 uint32, bb2 uint32) uint32 {
 	return (((bb2 & evenRows) << 4) |
-		((bb2 & evenRows & removeLeft) << 3)) & bb1
+		((bb2 & oddRows & removeLeft) << 3)) & bb1
 }
 
 func BlackDiscMoves(b Board) uint32 {
@@ -227,7 +226,7 @@ func PrintBitBoard(b uint32) {
 	var shift uint8
 	for i := 0; i < 32; i++ {
 		shift = uint8(i)
-		if i%4 == 0 {
+		if i%4 == 0 && i != 0 {
 			fmt.Println()
 		}
 		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) ||
@@ -247,6 +246,7 @@ func PrintBitBoard(b uint32) {
 			fmt.Print("_")
 		}
 	}
+	fmt.Println()
 }
 
 func PrintBoardWithBitBoard(b Board, b2 uint32) {
@@ -260,7 +260,7 @@ func PrintBoardWithBitBoard(b Board, b2 uint32) {
 	var shift uint8
 	for i := 0; i < 32; i++ {
 		shift = uint8(i)
-		if i%4 == 0 {
+		if i%4 == 0 && i != 0 {
 			fmt.Println()
 		}
 		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) ||
@@ -296,6 +296,7 @@ func PrintBoardWithBitBoard(b Board, b2 uint32) {
 			fmt.Print("_")
 		}
 	}
+	fmt.Print()
 }
 
 func PrintBoard(b Board) {
@@ -309,7 +310,7 @@ func PrintBoard(b Board) {
 	var shift uint8
 	for i := 0; i < 32; i++ {
 		shift = uint8(i)
-		if i%4 == 0 {
+		if i%4 == 0 && i != 0 {
 			fmt.Println()
 		}
 		if (i >= 0 && i <= 3) || (i >= 8 && i <= 11) ||
@@ -341,6 +342,7 @@ func PrintBoard(b Board) {
 			fmt.Print("_")
 		}
 	}
+	fmt.Print()
 }
 
 func GenerateBoard(player bool, board [64]uint8) (b Board) {
