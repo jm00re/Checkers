@@ -69,7 +69,10 @@ func main() {
 	PrintBitBoard(UpLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
 	fmt.Println()
 	temp := UpLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b))
-	PrintBitBoard(MoveDownRight(Bitscan(temp), temp))
+	PrintBitBoard(MoveUpLeft(Bitscan(temp), temp))
+	fmt.Println()
+	temp2 := UpRightMoveSource(b.whiteDiscs, WhiteDiscMoves(b))
+	PrintBitBoard(MoveUpRight(Bitscan(temp2), temp2))
 	fmt.Println()
 }
 
@@ -78,16 +81,19 @@ func MoveDownRight(move uint8, bb uint32) uint32 {
 		(((1 << move) & evenRows & removeRight) << 5)) | bb) ^ (1 << move)
 }
 
-func MoveDownLeft(uint8 move, uin32 bb) uint32 {
+func MoveDownLeft(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & evenRows) << 4) |
-		(((1 << move) & oddRows & removeLeft) << 3)) | bb1) ^ (1 << move)
+		(((1 << move) & oddRows & removeLeft) << 3)) | bb) ^ (1 << move)
 }
 
-func MoveUpLeft(uint8 move, uin32 bb) uint32 {
-	return 0
+func MoveUpLeft(move uint8, bb uint32) uint32 {
+	return (((((1 << move) & oddRows & removeLeft) >> 5) |
+		(((1 << move) & evenRows) >> 4)) | bb) ^ (1 << move)
+
 }
-func MoveUpRight(uint8 move, uin32 bb) uint32 {
-	return 0
+func MoveUpRight(move uint8, bb uint32) uint32 {
+	return (((((1 << move) & evenRows & removeRight) >> 3) |
+		(((1 << move) & oddRows) >> 4)) | bb) ^ (1 << move)
 }
 
 // There's probably a better way to do this. Just going to give this a try.
