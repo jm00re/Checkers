@@ -6,11 +6,9 @@ import (
 	//"github.com/davecheney/profile"
 	//"math"
 	"os"
-	"strconv"
+	//"strconv"
 	"strings"
 )
-
-// TODO To calc the actual move xor new board with old board.
 
 // I think I'm going to add a lot more bitboards to this:
 // Even and Odd row variants of all the pieces
@@ -50,32 +48,16 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	PrintOn(b.blackDiscs)
-	PrintBoardWithBitBoard(b, BlackDiscMoves(b))
-	fmt.Println()
-	fmt.Println(strconv.FormatInt(int64(b.blackDiscs), 2))
-	fmt.Println("DownRight")
-	PrintBitBoard(DownRightMoveSource(b.blackDiscs, BlackDiscMoves(b)))
-	fmt.Println("DownLeft")
-	PrintBitBoard(DownLeftMoveSource(b.blackDiscs, BlackDiscMoves(b)))
+
+	PrintBoardWithBitBoard(b, BlackDiscCaptures(b))
 	fmt.Println()
 	fmt.Println()
-	PrintBoardWithBitBoard(b, WhiteDiscMoves(b))
-	fmt.Println()
-	fmt.Println(strconv.FormatInt(int64(b.whiteDiscs), 2))
-	fmt.Println("UpRight")
-	PrintBitBoard(UpRightMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
-	fmt.Println("UpLeft")
-	PrintBitBoard(UpLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b)))
-	fmt.Println()
-	temp := UpLeftMoveSource(b.whiteDiscs, WhiteDiscMoves(b))
-	PrintBitBoard(MoveUpLeft(Bitscan(temp), temp))
-	fmt.Println()
-	temp2 := UpRightMoveSource(b.whiteDiscs, WhiteDiscMoves(b))
-	PrintBitBoard(MoveUpRight(Bitscan(temp2), temp2))
-	fmt.Println()
+	PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, BlackDiscCaptures(b)))
 }
 
+// These take a the move location and a bitboard from xxMoveSource
+// DownLeft/Right are for blackdiscs and kings
+// UpLeft/Right are for whitediscs and kings
 func MoveDownRight(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & oddRows) << 4) |
 		(((1 << move) & evenRows & removeRight) << 5)) | bb) ^ (1 << move)
@@ -102,6 +84,7 @@ func MoveUpRight(move uint8, bb uint32) uint32 {
 // that can make moves
 // This new bitboard can be bitscanned to actually make the moves for the AI
 // bb1 is board, bb2 is move bitboard
+// Down = black, Up = White
 func DownRightMoveSource(bb1 uint32, bb2 uint32) uint32 {
 	return (((bb2 & oddRows & removeLeft) >> 5) |
 		((bb2 & evenRows) >> 4)) & bb1
@@ -122,11 +105,28 @@ func UpRightMoveSource(bb1 uint32, bb2 uint32) uint32 {
 		((bb2 & oddRows & removeLeft) << 3)) & bb1
 }
 
+// These work the same as the regular move source functions
+func DownRightCaptureSource(bb1 uint32, bb2 uint32) uint32 {
+	return (bb2 >> 9) & bb1
+}
+
+func DownLeftCaptureSource(bb1 uint32, bb2 uint32) uint32 {
+	return (bb2 >> 7) & bb1
+}
+
+func UpRightCaptureSource(bb1 uint32, bb2 uint32) uint32 {
+	return (bb2 << 7) & bb1
+}
+
+func UpLeftCaptureSource(bb1 uint32, bb2 uint32) uint32 {
+	return (bb2 << 9) & bb1
+}
+
+// So basically I'm taking advantage of masking the off rows,
+// Performing a shift and then doing it again for the other rows
+// After all the potential moves have been calc'd I mask the taken spaces
+// I messed this up orginally and didn't realize I needed to shift the rows differently
 func BlackDiscMoves(b Board) uint32 {
-	// So basically I'm taking advantage of masking the off rows,
-	// Performing a shift and then doing it again for the other rows
-	// After all the potential moves have been calc'd I mask the taken spaces
-	// I messed this up orginally and didn't realize I needed to shift the rows differently
 	return (((b.blackDiscs & removeLeft & oddRows) << 3) |
 		((b.blackDiscs & oddRows) << 4) |
 		((b.blackDiscs & evenRows) << 4) |
@@ -258,11 +258,11 @@ func PrintBitBoard(b uint32) {
 func PrintBoardWithBitBoard(b Board, b2 uint32) {
 	// Shifts by i and checks if the value is 1.
 	// Prints the correct indictor based on the bitboard used
-	if b.player {
-		fmt.Print("b")
-	} else {
-		fmt.Print("w")
-	}
+	//if b.player {
+	//	fmt.Print("b")
+	//} else {
+	//	fmt.Print("w")
+	//}
 	var shift uint8
 	for i := 0; i < 32; i++ {
 		shift = uint8(i)
