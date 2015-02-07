@@ -47,12 +47,12 @@ func main() {
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
 
-	PrintBoardWithBitBoard(b, b.BlackDiscMoves())
+	PrintBoardWithBitBoard(b, b.WhiteDiscCaptures())
 	fmt.Println()
 	fmt.Println()
-	move := (Bitscan(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures())))
-	b.CaptureBlackDiscDownLeft(move)
-	PrintBoardWithBitBoard(b, b.BlackDiscMoves())
+	move := (Bitscan(UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures())))
+	b.CaptureWhiteDiscUpRight(move)
+	PrintBoardWithBitBoard(b, b.WhiteDiscCaptures())
 	//PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures()))
 }
 
@@ -99,6 +99,26 @@ func (b *Board) CaptureBlackDiscDownLeft(move uint8) {
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 }
 
+func (b *Board) CaptureWhiteDiscUpLeft(move uint8) {
+	b.whiteDiscs = CaptureUpLeft(move, b.whiteDiscs)
+	b.blackDiscs = (((1 << (move - 5)) & evenRows) ^ b.blackDiscs) &
+		(((1 << (move - 4)) & oddRows) ^ b.blackDiscs)
+	b.blackKings = (((1 << (move - 5)) & evenRows) ^ b.blackKings) &
+		(((1 << (move - 4)) & oddRows) ^ b.blackKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) CaptureWhiteDiscUpRight(move uint8) {
+	b.whiteDiscs = CaptureUpRight(move, b.whiteDiscs)
+	b.blackDiscs = (((1 << (move - 4)) & evenRows) ^ b.blackDiscs) &
+		(((1 << (move - 3)) & oddRows) ^ b.blackDiscs)
+	b.blackKings = (((1 << (move - 4)) & evenRows) ^ b.blackKings) &
+		(((1 << (move - 3)) & oddRows) ^ b.blackKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
 func MoveDownRight(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & oddRows) << 4) |
 		(((1 << move) & evenRows & removeRight) << 5)) | bb) ^ (1 << move)
@@ -128,11 +148,11 @@ func CaptureDownLeft(move uint8, bb uint32) uint32 {
 }
 
 func CaptureUpLeft(move uint8, bb uint32) uint32 {
-	return (((1 << move) >> 7) | bb) ^ (1 << move)
+	return (((1 << move) >> 9) | bb) ^ (1 << move)
 }
 
 func CaptureUpRight(move uint8, bb uint32) uint32 {
-	return (((1 << move) >> 9) | bb) ^ (1 << move)
+	return (((1 << move) >> 7) | bb) ^ (1 << move)
 }
 
 // There's probably a better way to do this. Just going to give this a try.
