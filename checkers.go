@@ -50,12 +50,10 @@ func main() {
 	PrintBoardWithBitBoard(b, b.BlackDiscMoves())
 	fmt.Println()
 	fmt.Println()
-	move := (Bitscan(DownRightMoveSource(b.blackDiscs, b.BlackDiscMoves())))
-	b.MoveBlackDiscDownRight(move)
+	move := (Bitscan(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures())))
+	b.CaptureBlackDiscDownLeft(move)
 	PrintBoardWithBitBoard(b, b.BlackDiscMoves())
-
 	//PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures()))
-
 }
 
 // These take a the move location and a bitboard from xxMoveSource
@@ -81,6 +79,26 @@ func (b *Board) MoveWhiteDiscUpLeft(move uint8) {
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 }
 
+func (b *Board) CaptureBlackDiscDownRight(move uint8) {
+	b.blackDiscs = CaptureDownRight(move, b.blackDiscs)
+	b.whiteDiscs = (((1 << (move + 4)) & evenRows) ^ b.whiteDiscs) &
+		(((1 << (move + 5)) & oddRows) ^ b.whiteDiscs)
+	b.whiteKings = (((1 << (move + 4)) & evenRows) ^ b.whiteKings) &
+		(((1 << (move + 5)) & oddRows) ^ b.whiteKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) CaptureBlackDiscDownLeft(move uint8) {
+	b.blackDiscs = CaptureDownLeft(move, b.blackDiscs)
+	b.whiteDiscs = (((1 << (move + 3)) & evenRows) ^ b.whiteDiscs) &
+		(((1 << (move + 4)) & oddRows) ^ b.whiteDiscs)
+	b.whiteKings = (((1 << (move + 3)) & evenRows) ^ b.whiteKings) &
+		(((1 << (move + 4)) & oddRows) ^ b.whiteKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
 func MoveDownRight(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & oddRows) << 4) |
 		(((1 << move) & evenRows & removeRight) << 5)) | bb) ^ (1 << move)
@@ -102,19 +120,19 @@ func MoveUpRight(move uint8, bb uint32) uint32 {
 }
 
 func CaptureDownRight(move uint8, bb uint32) uint32 {
-	return 0
+	return (((1 << move) << 9) | bb) ^ (1 << move)
 }
 
 func CaptureDownLeft(move uint8, bb uint32) uint32 {
-	return 0
+	return (((1 << move) << 7) | bb) ^ (1 << move)
 }
 
 func CaptureUpLeft(move uint8, bb uint32) uint32 {
-	return 0
+	return (((1 << move) >> 7) | bb) ^ (1 << move)
 }
 
 func CaptureUpRight(move uint8, bb uint32) uint32 {
-	return 0
+	return (((1 << move) >> 9) | bb) ^ (1 << move)
 }
 
 // There's probably a better way to do this. Just going to give this a try.
@@ -257,6 +275,7 @@ func NewWhiteKings(b uint32) uint32 {
 
 // I straight up stole this from Kim Walisch ala https://chessprogramming.wikispaces.com/Kim+Walisch
 // Returns the index of the lsb
+// Also this code is literally magic.
 func Bitscan(b uint32) uint8 {
 	return bitscanLookup[((b^(b-1))*0x07C4ACDD)>>27]
 }
