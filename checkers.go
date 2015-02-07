@@ -10,11 +10,9 @@ import (
 	"strings"
 )
 
-// I think I'm going to add a lot more bitboards to this:
-// Even and Odd row variants of all the pieces
-// All of the black/white pieces
-// The pieces without the far left or right black squares
-// Calculating each bitboard once per board and just looking them up might be way more efficient
+// I might change the functions to go from taking a bitboard to operating on a Board struct.
+// Could save some hassle
+
 type Board struct {
 	player bool
 
@@ -49,15 +47,40 @@ func main() {
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
 
-	PrintBoardWithBitBoard(b, BlackDiscCaptures(b))
+	PrintBoardWithBitBoard(b, b.BlackDiscMoves())
 	fmt.Println()
 	fmt.Println()
-	PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, BlackDiscCaptures(b)))
+	move := (Bitscan(DownRightMoveSource(b.blackDiscs, b.BlackDiscMoves())))
+	b.MoveBlackDiscDownRight(move)
+	PrintBoardWithBitBoard(b, b.BlackDiscMoves())
+
+	//PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures()))
+
 }
 
 // These take a the move location and a bitboard from xxMoveSource
 // DownLeft/Right are for blackdiscs and kings
 // UpLeft/Right are for whitediscs and kings
+func (b *Board) MoveBlackDiscDownRight(move uint8) {
+	b.blackDiscs = MoveDownRight(move, b.blackDiscs)
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) MoveBlackDiscDownLeft(move uint8) {
+	b.blackDiscs = MoveDownLeft(move, b.blackDiscs)
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) MoveWhiteDiscUpRight(move uint8) {
+	b.whiteDiscs = MoveDownRight(move, b.whiteDiscs)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) MoveWhiteDiscUpLeft(move uint8) {
+	b.whiteDiscs = MoveDownLeft(move, b.whiteDiscs)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
 func MoveDownRight(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & oddRows) << 4) |
 		(((1 << move) & evenRows & removeRight) << 5)) | bb) ^ (1 << move)
@@ -71,11 +94,27 @@ func MoveDownLeft(move uint8, bb uint32) uint32 {
 func MoveUpLeft(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & oddRows & removeLeft) >> 5) |
 		(((1 << move) & evenRows) >> 4)) | bb) ^ (1 << move)
-
 }
+
 func MoveUpRight(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & evenRows & removeRight) >> 3) |
 		(((1 << move) & oddRows) >> 4)) | bb) ^ (1 << move)
+}
+
+func CaptureDownRight(move uint8, bb uint32) uint32 {
+	return 0
+}
+
+func CaptureDownLeft(move uint8, bb uint32) uint32 {
+	return 0
+}
+
+func CaptureUpLeft(move uint8, bb uint32) uint32 {
+	return 0
+}
+
+func CaptureUpRight(move uint8, bb uint32) uint32 {
+	return 0
 }
 
 // There's probably a better way to do this. Just going to give this a try.
@@ -126,14 +165,14 @@ func UpLeftCaptureSource(bb1 uint32, bb2 uint32) uint32 {
 // Performing a shift and then doing it again for the other rows
 // After all the potential moves have been calc'd I mask the taken spaces
 // I messed this up orginally and didn't realize I needed to shift the rows differently
-func BlackDiscMoves(b Board) uint32 {
+func (b Board) BlackDiscMoves() uint32 {
 	return (((b.blackDiscs & removeLeft & oddRows) << 3) |
 		((b.blackDiscs & oddRows) << 4) |
 		((b.blackDiscs & evenRows) << 4) |
 		((b.blackDiscs & removeRight & evenRows) << 5)) &^ b.occupied
 }
 
-func BlackDiscCaptures(b Board) uint32 {
+func (b Board) BlackDiscCaptures() uint32 {
 	// The first half check if an opposing piece is diagonal,
 	// then check if there is a black space open beyond that
 	return (((((b.blackDiscs & removeLeftTwo & evenRows) << 4) &
@@ -146,7 +185,7 @@ func BlackDiscCaptures(b Board) uint32 {
 			(b.whitePieces)) << 5)) &^ b.occupied
 }
 
-func WhiteDiscMoves(b Board) uint32 {
+func (b Board) WhiteDiscMoves() uint32 {
 	// Same dealie as BlackDiscMoves
 	return (((b.whiteDiscs & oddRows) >> 4) |
 		((b.whiteDiscs & removeLeft & oddRows) >> 5) |
@@ -154,7 +193,7 @@ func WhiteDiscMoves(b Board) uint32 {
 		((b.whiteDiscs & evenRows) >> 4)) &^ b.occupied
 }
 
-func WhiteDiscCaptures(b Board) uint32 {
+func (b Board) WhiteDiscCaptures() uint32 {
 	// Same dealie as BlackDiscCaptures
 	return (((((b.whiteDiscs & removeLeftTwo & evenRows) >> 4) &
 		(b.blackPieces)) >> 5) |
@@ -166,7 +205,7 @@ func WhiteDiscCaptures(b Board) uint32 {
 			(b.blackPieces)) >> 3)) &^ b.occupied
 }
 
-func BlackKingMoves(b Board) uint32 {
+func (b Board) BlackKingMoves() uint32 {
 	if b.blackKings != 0 {
 		return (((b.blackKings & evenRows) << 4) |
 			((b.blackKings & removeRight & evenRows) << 5) |
@@ -180,7 +219,7 @@ func BlackKingMoves(b Board) uint32 {
 	return 0
 }
 
-func WhiteKingMoves(b Board) uint32 {
+func (b Board) WhiteKingMoves() uint32 {
 	if b.whiteKings != 0 {
 		return (((b.whiteKings & evenRows) << 4) |
 			((b.whiteKings & removeRight & evenRows) << 5) |
@@ -190,6 +229,20 @@ func WhiteKingMoves(b Board) uint32 {
 			((b.whiteKings & oddRows) << 4) |
 			((b.whiteKings & oddRows) >> 4) |
 			((b.whiteKings & removeLeft & oddRows) >> 5)) &^ b.occupied
+	}
+	return 0
+}
+
+func (b Board) BlackKingCaptures() uint32 {
+	if b.blackKings != 0 {
+		return (((b.blackKings & evenRows) << 4) |
+			((b.blackKings & removeRight & evenRows) << 5) |
+			((b.blackKings & removeRight & evenRows) >> 3) |
+			((b.blackKings & evenRows) >> 4) |
+			((b.blackKings & removeLeft & oddRows) << 3) |
+			((b.blackKings & oddRows) << 4) |
+			((b.blackKings & oddRows) >> 4) |
+			((b.blackKings & removeLeft & oddRows) >> 5)) &^ b.occupied
 	}
 	return 0
 }
