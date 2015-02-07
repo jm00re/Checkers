@@ -47,12 +47,11 @@ func main() {
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
 
-	PrintBoardWithBitBoard(b, b.WhiteDiscCaptures())
-	fmt.Println()
-	fmt.Println()
-	move := (Bitscan(UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures())))
-	b.CaptureWhiteDiscUpRight(move)
-	PrintBoardWithBitBoard(b, b.WhiteDiscCaptures())
+	//if UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures()) != 0 {
+	//	move := (Bitscan(UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures())))
+	//	b.CaptureWhiteDiscUpRight(move)
+	//	PrintBoardWithBitBoard(b, b.WhiteDiscCaptures())
+	//}
 	//PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures()))
 }
 
@@ -117,6 +116,16 @@ func (b *Board) CaptureWhiteDiscUpRight(move uint8) {
 		(((1 << (move - 3)) & oddRows) ^ b.blackKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) NewBlackKings() {
+	b.blackKings = b.blackKings | (b.blackDiscs & keepBack)
+	b.blackDiscs = b.blackDiscs &^ (b.blackDiscs & keepBack)
+}
+
+func (b *Board) NewWhiteKings() {
+	b.whiteKings = b.whiteKings | (b.whiteDiscs & keepFront)
+	b.whiteDiscs = b.whiteDiscs &^ (b.whiteDiscs & keepFront)
 }
 
 func MoveDownRight(move uint8, bb uint32) uint32 {
@@ -285,14 +294,6 @@ func (b Board) BlackKingCaptures() uint32 {
 	return 0
 }
 
-func NewBlackKings(b uint32) uint32 {
-	return b & keepBack
-}
-
-func NewWhiteKings(b uint32) uint32 {
-	return b & keepFront
-}
-
 // I straight up stole this from Kim Walisch ala https://chessprogramming.wikispaces.com/Kim+Walisch
 // Returns the index of the lsb
 // Also this code is literally magic.
@@ -400,11 +401,6 @@ func PrintBoardWithBitBoard(b Board, b2 uint32) {
 func PrintBoard(b Board) {
 	// Shifts by i and checks if the value is 1.
 	// Prints the correct indictor based on the bitboard used
-	if b.player {
-		fmt.Print("b")
-	} else {
-		fmt.Print("w")
-	}
 	var shift uint8
 	for i := 0; i < 32; i++ {
 		shift = uint8(i)
