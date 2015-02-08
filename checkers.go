@@ -46,6 +46,7 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
+	PrintBoard(b)
 
 	//if UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures()) != 0 {
 	//	move := (Bitscan(UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures())))
@@ -75,6 +76,48 @@ func (b *Board) MoveWhiteDiscUpRight(move uint8) {
 
 func (b *Board) MoveWhiteDiscUpLeft(move uint8) {
 	b.whiteDiscs = MoveDownLeft(move, b.whiteDiscs)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+// Board updating black king movements
+func (b *Board) MoveBlackKingDownRight(move uint8) {
+	b.blackKings = MoveDownRight(move, b.blackKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) MoveBlackKingDownLeft(move uint8) {
+	b.blackKings = MoveDownLeft(move, b.blackKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) MoveBlackKingUpRight(move uint8) {
+	b.blackKings = MoveDownRight(move, b.blackKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) MoveBlackKingUpLeft(move uint8) {
+	b.blackKings = MoveDownLeft(move, b.blackKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+// Board updating black king movements
+func (b *Board) MoveWhiteKingDownRight(move uint8) {
+	b.whiteKings = MoveDownRight(move, b.whiteKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) MoveWhiteKingDownLeft(move uint8) {
+	b.whiteKings = MoveDownLeft(move, b.whiteKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) MoveWhiteKingUpRight(move uint8) {
+	b.whiteKings = MoveDownRight(move, b.whiteKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) MoveWhiteKingUpLeft(move uint8) {
+	b.whiteKings = MoveDownLeft(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 }
 
@@ -128,6 +171,7 @@ func (b *Board) NewWhiteKings() {
 	b.whiteDiscs = b.whiteDiscs &^ (b.whiteDiscs & keepFront)
 }
 
+// Utility function for updating a bitboard with new piece position
 func MoveDownRight(move uint8, bb uint32) uint32 {
 	return (((((1 << move) & oddRows) << 4) |
 		(((1 << move) & evenRows & removeRight) << 5)) | bb) ^ (1 << move)
@@ -148,6 +192,7 @@ func MoveUpRight(move uint8, bb uint32) uint32 {
 		(((1 << move) & oddRows) >> 4)) | bb) ^ (1 << move)
 }
 
+// Utility functions for determining were a capturing piece ends up
 func CaptureDownRight(move uint8, bb uint32) uint32 {
 	return (((1 << move) << 9) | bb) ^ (1 << move)
 }
