@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// This all needs to be in one file for Hackerrank
 // I might change the functions to go from taking a bitboard to operating on a Board struct.
 // Could save some hassle
 
@@ -100,7 +101,7 @@ func (b *Board) MoveBlackKingUpLeft(move uint8) {
 	b.blackPieces = b.blackDiscs | b.blackKings
 }
 
-// Board updating black king movements
+// Board updating white king movements
 func (b *Board) MoveWhiteKingDownRight(move uint8) {
 	b.whiteKings = MoveDownRight(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
@@ -141,6 +142,48 @@ func (b *Board) CaptureBlackDiscDownLeft(move uint8) {
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 }
 
+// Board updating Black King Captures
+func (b *Board) CaptureBlackKingDownRight(move uint8) {
+	b.blackKings = CaptureDownRight(move, b.blackKings)
+	b.whiteDiscs = (((1 << (move + 4)) & evenRows) ^ b.whiteDiscs) &
+		(((1 << (move + 5)) & oddRows) ^ b.whiteDiscs)
+	b.whiteKings = (((1 << (move + 4)) & evenRows) ^ b.whiteKings) &
+		(((1 << (move + 5)) & oddRows) ^ b.whiteKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) CaptureBlackKingDownLeft(move uint8) {
+	b.blackKings = CaptureDownLeft(move, b.blackKings)
+	b.whiteDiscs = (((1 << (move + 3)) & evenRows) ^ b.whiteDiscs) &
+		(((1 << (move + 4)) & oddRows) ^ b.whiteDiscs)
+	b.whiteKings = (((1 << (move + 3)) & evenRows) ^ b.whiteKings) &
+		(((1 << (move + 4)) & oddRows) ^ b.whiteKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) CaptureBlackKingUpLeft(move uint8) {
+	b.blackKings = CaptureUpLeft(move, b.blackKings)
+	b.whiteDiscs = (((1 << (move - 5)) & evenRows) ^ b.whiteDiscs) &
+		(((1 << (move - 4)) & oddRows) ^ b.whiteDiscs)
+	b.whiteKings = (((1 << (move - 5)) & evenRows) ^ b.whiteKings) &
+		(((1 << (move - 4)) & oddRows) ^ b.whiteKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) CaptureBlackKingUpRight(move uint8) {
+	b.blackKings = CaptureUpRight(move, b.blackKings)
+	b.whiteDiscs = (((1 << (move - 4)) & evenRows) ^ b.whiteDiscs) &
+		(((1 << (move - 3)) & oddRows) ^ b.whiteDiscs)
+	b.whiteKings = (((1 << (move - 4)) & evenRows) ^ b.whiteKings) &
+		(((1 << (move - 3)) & oddRows) ^ b.whiteKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+// White disc captures
 func (b *Board) CaptureWhiteDiscUpLeft(move uint8) {
 	b.whiteDiscs = CaptureUpLeft(move, b.whiteDiscs)
 	b.blackDiscs = (((1 << (move - 5)) & evenRows) ^ b.blackDiscs) &
