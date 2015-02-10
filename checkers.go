@@ -204,6 +204,46 @@ func (b *Board) CaptureWhiteDiscUpRight(move uint8) {
 	b.blackPieces = b.blackDiscs | b.blackKings
 }
 
+func (b *Board) CaptureWhiteKingDownRight(move uint8) {
+	b.whiteKings = CaptureDownRight(move, b.whiteKings)
+	b.blackDiscs = (((1 << (move + 4)) & evenRows) ^ b.blackDiscs) &
+		(((1 << (move + 5)) & oddRows) ^ b.blackDiscs)
+	b.blackKings = (((1 << (move + 4)) & evenRows) ^ b.blackKings) &
+		(((1 << (move + 5)) & oddRows) ^ b.blackKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) CaptureWhiteKingDownLeft(move uint8) {
+	b.whiteKings = CaptureDownLeft(move, b.whiteKings)
+	b.blackDiscs = (((1 << (move + 3)) & evenRows) ^ b.blackDiscs) &
+		(((1 << (move + 4)) & oddRows) ^ b.blackDiscs)
+	b.blackKings = (((1 << (move + 3)) & evenRows) ^ b.blackKings) &
+		(((1 << (move + 4)) & oddRows) ^ b.blackKings)
+	b.blackPieces = b.blackDiscs | b.blackKings
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+}
+
+func (b *Board) CaptureWhiteKingUpLeft(move uint8) {
+	b.whiteKings = CaptureUpLeft(move, b.whiteKings)
+	b.blackDiscs = (((1 << (move - 5)) & evenRows) ^ b.blackDiscs) &
+		(((1 << (move - 4)) & oddRows) ^ b.blackDiscs)
+	b.blackKings = (((1 << (move - 5)) & evenRows) ^ b.blackKings) &
+		(((1 << (move - 4)) & oddRows) ^ b.blackKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
+func (b *Board) CaptureWhiteKingUpRight(move uint8) {
+	b.whiteKings = CaptureUpRight(move, b.whiteKings)
+	b.blackDiscs = (((1 << (move - 4)) & evenRows) ^ b.blackDiscs) &
+		(((1 << (move - 3)) & oddRows) ^ b.blackDiscs)
+	b.blackKings = (((1 << (move - 4)) & evenRows) ^ b.blackKings) &
+		(((1 << (move - 3)) & oddRows) ^ b.blackKings)
+	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.blackPieces = b.blackDiscs | b.blackKings
+}
+
 func (b *Board) NewBlackKings() {
 	b.blackKings = b.blackKings | (b.blackDiscs & keepBack)
 	b.blackDiscs = b.blackDiscs &^ (b.blackDiscs & keepBack)
