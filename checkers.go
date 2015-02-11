@@ -57,9 +57,49 @@ func main() {
 	//PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures()))
 }
 
+func AlphaBeta(player bool, board Board, alpha int32, beta int32, depth uint8) int32 {
+	// IF max depth or one side doesn't have pieces
+	if depth == 0 || board.blackPieces == 0 || board.whitePieces == 0 {
+	} else {
+		if player {
+			if board.BlackDiscCaptures() != 0 {
+			} else if board.BlackKingCaptures() != 0 {
+				// Unimplemeneted
+			} else if board.BlackKingMoves() != 0 {
+			} else if board.BlackDiscMoves() != 0 {
+			}
+		} else {
+			if board.WhiteDiscCaptures() != 0 {
+			} else if board.WhiteKingCaptures() != 0 {
+				// Unimplemeneted
+			} else if board.WhiteKingMoves() != 0 {
+			} else if board.WhiteDiscMoves() != 0 {
+			}
+		}
+	}
+	// to make it compile
+	return 0
+}
+
+func (b Board) CopyBoard() (newBoard Board) {
+	newBoard.player = b.player
+
+	newBoard.blackDiscs = b.blackDiscs
+	newBoard.blackKings = b.blackKings
+	newBoard.blackPieces = b.blackPieces
+
+	newBoard.whiteDiscs = b.whiteDiscs
+	newBoard.whiteKings = b.whiteKings
+	newBoard.whitePieces = b.whitePieces
+
+	newBoard.occupied = b.occupied
+	return
+}
+
 // These take a the move location and a bitboard from xxMoveSource
 // DownLeft/Right are for blackdiscs and kings
 // UpLeft/Right are for whitediscs and kings
+
 func (b *Board) MoveBlackDiscDownRight(move uint8) {
 	b.blackDiscs = MoveDownRight(move, b.blackDiscs)
 	b.blackPieces = b.blackDiscs | b.blackKings
@@ -408,16 +448,17 @@ func (b Board) WhiteKingMoves() uint32 {
 	return 0
 }
 
+// Woops Looks like I didn't actually implement these
 func (b Board) BlackKingCaptures() uint32 {
 	if b.blackKings != 0 {
-		return (((b.blackKings & evenRows) << 4) |
-			((b.blackKings & removeRight & evenRows) << 5) |
-			((b.blackKings & removeRight & evenRows) >> 3) |
-			((b.blackKings & evenRows) >> 4) |
-			((b.blackKings & removeLeft & oddRows) << 3) |
-			((b.blackKings & oddRows) << 4) |
-			((b.blackKings & oddRows) >> 4) |
-			((b.blackKings & removeLeft & oddRows) >> 5)) &^ b.occupied
+		return 0
+	}
+	return 0
+}
+
+func (b Board) WhiteKingCaptures() uint32 {
+	if b.whiteKings != 0 {
+		return 0
 	}
 	return 0
 }
