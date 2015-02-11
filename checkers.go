@@ -10,6 +10,8 @@ import (
 	"strings"
 )
 
+// I think vim is a super power after needing to do so many find and replaces writing this
+
 // This all needs to be in one file for Hackerrank
 // I might change the functions to go from taking a bitboard to operating on a Board struct.
 // Could save some hassle
@@ -103,63 +105,75 @@ func (b Board) CopyBoard() (newBoard Board) {
 func (b *Board) MoveBlackDiscDownRight(move uint8) {
 	b.blackDiscs = MoveDownRight(move, b.blackDiscs)
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveBlackDiscDownLeft(move uint8) {
 	b.blackDiscs = MoveDownLeft(move, b.blackDiscs)
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveWhiteDiscUpRight(move uint8) {
 	b.whiteDiscs = MoveDownRight(move, b.whiteDiscs)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveWhiteDiscUpLeft(move uint8) {
 	b.whiteDiscs = MoveDownLeft(move, b.whiteDiscs)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 // Board updating black king movements
 func (b *Board) MoveBlackKingDownRight(move uint8) {
 	b.blackKings = MoveDownRight(move, b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveBlackKingDownLeft(move uint8) {
 	b.blackKings = MoveDownLeft(move, b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveBlackKingUpRight(move uint8) {
 	b.blackKings = MoveDownRight(move, b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveBlackKingUpLeft(move uint8) {
 	b.blackKings = MoveDownLeft(move, b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 // Board updating white king movements
 func (b *Board) MoveWhiteKingDownRight(move uint8) {
 	b.whiteKings = MoveDownRight(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveWhiteKingDownLeft(move uint8) {
 	b.whiteKings = MoveDownLeft(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveWhiteKingUpRight(move uint8) {
 	b.whiteKings = MoveDownRight(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveWhiteKingUpLeft(move uint8) {
 	b.whiteKings = MoveDownLeft(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureBlackDiscDownRight(move uint8) {
@@ -170,6 +184,7 @@ func (b *Board) CaptureBlackDiscDownRight(move uint8) {
 		(((1 << (move + 5)) & oddRows) ^ b.whiteKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureBlackDiscDownLeft(move uint8) {
@@ -180,6 +195,7 @@ func (b *Board) CaptureBlackDiscDownLeft(move uint8) {
 		(((1 << (move + 4)) & oddRows) ^ b.whiteKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 // Board updating Black King Captures
@@ -191,6 +207,7 @@ func (b *Board) CaptureBlackKingDownRight(move uint8) {
 		(((1 << (move + 5)) & oddRows) ^ b.whiteKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureBlackKingDownLeft(move uint8) {
@@ -201,6 +218,7 @@ func (b *Board) CaptureBlackKingDownLeft(move uint8) {
 		(((1 << (move + 4)) & oddRows) ^ b.whiteKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureBlackKingUpLeft(move uint8) {
@@ -211,6 +229,7 @@ func (b *Board) CaptureBlackKingUpLeft(move uint8) {
 		(((1 << (move - 4)) & oddRows) ^ b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureBlackKingUpRight(move uint8) {
@@ -221,6 +240,7 @@ func (b *Board) CaptureBlackKingUpRight(move uint8) {
 		(((1 << (move - 3)) & oddRows) ^ b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 // White disc captures
@@ -232,6 +252,7 @@ func (b *Board) CaptureWhiteDiscUpLeft(move uint8) {
 		(((1 << (move - 4)) & oddRows) ^ b.blackKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureWhiteDiscUpRight(move uint8) {
@@ -242,6 +263,7 @@ func (b *Board) CaptureWhiteDiscUpRight(move uint8) {
 		(((1 << (move - 3)) & oddRows) ^ b.blackKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureWhiteKingDownRight(move uint8) {
@@ -252,6 +274,7 @@ func (b *Board) CaptureWhiteKingDownRight(move uint8) {
 		(((1 << (move + 5)) & oddRows) ^ b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureWhiteKingDownLeft(move uint8) {
@@ -262,6 +285,7 @@ func (b *Board) CaptureWhiteKingDownLeft(move uint8) {
 		(((1 << (move + 4)) & oddRows) ^ b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.whitePieces = b.whiteDiscs | b.whiteKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureWhiteKingUpLeft(move uint8) {
@@ -272,6 +296,7 @@ func (b *Board) CaptureWhiteKingUpLeft(move uint8) {
 		(((1 << (move - 4)) & oddRows) ^ b.blackKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) CaptureWhiteKingUpRight(move uint8) {
@@ -282,6 +307,7 @@ func (b *Board) CaptureWhiteKingUpRight(move uint8) {
 		(((1 << (move - 3)) & oddRows) ^ b.blackKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.blackPieces = b.blackDiscs | b.blackKings
+	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) NewBlackKings() {
