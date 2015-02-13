@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	//"github.com/davecheney/profile"
 	"math"
+	//"github.com/davecheney/profile"
 	"os"
 	//"strconv"
 	"strings"
@@ -46,6 +46,7 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
+	PrintBitBoard(b.BlackKingMoves())
 	AlphaBeta(player, b, -1, 1, 1)
 }
 
@@ -61,50 +62,55 @@ func AlphaBeta(player bool, board Board, alpha int32, beta int32, depth uint8) i
 				}
 			} else {
 				if board.BlackKingMoves() != 0 {
-					DownLeftMoves := DownLeftMoveSource(board.blackKings, board.BlackKingMoves())
-					DownRightMoves := DownRightMoveSource(board.blackKings, board.BlackKingMoves())
-					UpLeftMoves := UpLeftMoveSource(board.blackKings, board.BlackKingMoves())
-					UpRightMoves := UpRightMoveSource(board.blackKings, board.BlackKingMoves())
-					for DownLeftMoves != 0 {
+					downLeftMoves := DownLeftMoveSource(board.blackKings, board.BlackKingMoves())
+					downRightMoves := DownRightMoveSource(board.blackKings, board.BlackKingMoves())
+					upLeftMoves := UpLeftMoveSource(board.blackKings, board.BlackKingMoves())
+					upRightMoves := UpRightMoveSource(board.blackKings, board.BlackKingMoves())
+					for downLeftMoves != 0 {
 						newBoard := board.CopyBoard()
-						newBoard.MoveBlackKingDownLeft(Bitscan(DownLeftMoves))
-						// Remove move from potential moves
-						DownLeftMoves = DownLeftMoves &^ (1 << Bitscan(DownLeftMoves))
+						newBoard.MoveBlackKingDownLeft(Bitscan(downLeftMoves))
+						downLeftMoves = downLeftMoves &^ (1 << Bitscan(downLeftMoves))
+						newBoard.NextPlayer()
 					}
-					for DownRightMoves != 0 {
+					for downRightMoves != 0 {
 						newBoard := board.CopyBoard()
-						newBoard.MoveBlackKingDownRight(Bitscan(DownRightMoves))
-						// Remove move from potential moves
-						DownRightMoves = DownRightMoves &^ (1 << Bitscan(DownRightMoves))
+						newBoard.MoveBlackKingDownRight(Bitscan(downRightMoves))
+						downRightMoves = downRightMoves &^ (1 << Bitscan(downRightMoves))
+						newBoard.NextPlayer()
 					}
-					for UpLeftMoves != 0 {
+					for upLeftMoves != 0 {
 						newBoard := board.CopyBoard()
-						newBoard.MoveBlackKingUpLeft(Bitscan(UpLeftMoves))
-						// Remove move from potential moves
-						UpLeftMoves = UpLeftMoves &^ (1 << Bitscan(UpLeftMoves))
+						newBoard.MoveBlackKingUpLeft(Bitscan(upLeftMoves))
+						upLeftMoves = upLeftMoves &^ (1 << Bitscan(upLeftMoves))
+						newBoard.NextPlayer()
 					}
-					for UpRightMoves != 0 {
+					for upRightMoves != 0 {
 						newBoard := board.CopyBoard()
-						newBoard.MoveBlackKingUpRight(Bitscan(UpRightMoves))
-						// Remove move from potential moves
-						UpRightMoves = UpRightMoves &^ (1 << Bitscan(UpRightMoves))
+						newBoard.MoveBlackKingUpRight(Bitscan(upRightMoves))
+						upRightMoves = upRightMoves &^ (1 << Bitscan(upRightMoves))
+						newBoard.NextPlayer()
 					}
-
 				}
 				if board.BlackDiscMoves() != 0 {
-					DownLeftMoves := DownLeftMoveSource(board.blackDiscs, board.BlackDiscMoves())
-					DownRightMoves := DownRightMoveSource(board.blackDiscs, board.BlackDiscMoves())
-					for DownLeftMoves != 0 {
+					// I'm not going to comment every if statement, they all work the same
+					// Get all potential moves
+					downLeftMoves := DownLeftMoveSource(board.blackDiscs, board.BlackDiscMoves())
+					downRightMoves := DownRightMoveSource(board.blackDiscs, board.BlackDiscMoves())
+					// Perform all downleft moves
+					for downLeftMoves != 0 {
 						newBoard := board.CopyBoard()
-						newBoard.MoveBlackDiscDownLeft(Bitscan(DownLeftMoves))
+						newBoard.MoveBlackDiscDownLeft(Bitscan(downLeftMoves))
 						// Remove move from potential moves
-						DownLeftMoves = DownLeftMoves &^ (1 << Bitscan(DownLeftMoves))
+						downLeftMoves = downLeftMoves &^ (1 << Bitscan(downLeftMoves))
+						newBoard.NextPlayer()
 					}
-					for DownRightMoves != 0 {
+					// Perform all downright moves
+					for downRightMoves != 0 {
 						newBoard := board.CopyBoard()
-						newBoard.MoveBlackDiscDownRight(Bitscan(DownRightMoves))
+						newBoard.MoveBlackDiscDownRight(Bitscan(downRightMoves))
 						// Remove move from potential moves
-						DownRightMoves = DownRightMoves &^ (1 << Bitscan(DownRightMoves))
+						downRightMoves = downRightMoves &^ (1 << Bitscan(downRightMoves))
+						newBoard.NextPlayer()
 					}
 				} else {
 					return math.MinInt32
@@ -353,6 +359,10 @@ func (b *Board) CaptureWhiteKingUpRight(move uint8) {
 	b.occupied = b.blackPieces | b.whitePieces
 }
 
+func (b *Board) NextPlayer() {
+	b.Player = !b.Player
+}
+
 func (b *Board) NewBlackKings() {
 	b.blackKings = b.blackKings | (b.blackDiscs & keepBack)
 	b.blackDiscs = b.blackDiscs &^ (b.blackDiscs & keepBack)
@@ -557,7 +567,6 @@ func (b Board) WhiteKingCaptures() uint32 {
 				(b.blackPieces)) >> 4) |
 			((((b.whiteKings & removeRightTwo & oddRows) >> 4) &
 				(b.blackPieces)) >> 3)) &^ b.occupied
-		return 0
 	}
 	return 0
 }
@@ -663,7 +672,7 @@ func PrintBoardWithBitBoard(b Board, b2 uint32) {
 			fmt.Print("_")
 		}
 	}
-	fmt.Print()
+	fmt.Println()
 }
 
 func PrintBoard(b Board) {
@@ -704,7 +713,7 @@ func PrintBoard(b Board) {
 			fmt.Print("_")
 		}
 	}
-	fmt.Print()
+	fmt.Println()
 }
 
 func GenerateBoard(player bool, board [64]uint8) (b Board) {
