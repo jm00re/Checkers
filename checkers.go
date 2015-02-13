@@ -477,13 +477,44 @@ func (b Board) WhiteKingMoves() uint32 {
 // Woops Looks like I didn't actually implement these
 func (b Board) BlackKingCaptures() uint32 {
 	if b.blackKings != 0 {
-		return 0
+		return (((((b.blackKings & removeLeftTwo & evenRows) << 4) &
+			(b.whitePieces)) << 3) |
+			((((b.blackKings & removeLeftTwo & oddRows) << 3) &
+				(b.whitePieces)) << 4) |
+			((((b.blackKings & removeRightTwo & evenRows) << 5) &
+				(b.whitePieces)) << 4) |
+			((((b.blackKings & removeRightTwo & oddRows) << 4) &
+				(b.whitePieces)) << 5) |
+			((((b.blackKings & removeLeftTwo & evenRows) >> 4) &
+				(b.whitePieces)) >> 5) |
+			((((b.blackKings & removeLeftTwo & oddRows) >> 5) &
+				(b.whitePieces)) >> 4) |
+			((((b.blackKings & removeRightTwo & evenRows) >> 3) &
+				(b.whitePieces)) >> 4) |
+			((((b.blackKings & removeRightTwo & oddRows) >> 4) &
+				(b.whitePieces)) >> 3)) &^ b.occupied
 	}
 	return 0
 }
 
 func (b Board) WhiteKingCaptures() uint32 {
 	if b.whiteKings != 0 {
+		return (((((b.whiteKings & removeLeftTwo & evenRows) << 4) &
+			(b.blackPieces)) << 3) |
+			((((b.whiteKings & removeLeftTwo & oddRows) << 3) &
+				(b.blackPieces)) << 4) |
+			((((b.whiteKings & removeRightTwo & evenRows) << 5) &
+				(b.blackPieces)) << 4) |
+			((((b.whiteKings & removeRightTwo & oddRows) << 4) &
+				(b.blackPieces)) << 5) |
+			((((b.whiteKings & removeLeftTwo & evenRows) >> 4) &
+				(b.blackPieces)) >> 5) |
+			((((b.whiteKings & removeLeftTwo & oddRows) >> 5) &
+				(b.blackPieces)) >> 4) |
+			((((b.whiteKings & removeRightTwo & evenRows) >> 3) &
+				(b.blackPieces)) >> 4) |
+			((((b.whiteKings & removeRightTwo & oddRows) >> 4) &
+				(b.blackPieces)) >> 3)) &^ b.occupied
 		return 0
 	}
 	return 0
