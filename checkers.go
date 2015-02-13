@@ -4,17 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	//"github.com/davecheney/profile"
-	//"math"
+	"math"
 	"os"
 	//"strconv"
 	"strings"
 )
 
 // I think vim is a super power after needing to do so many find and replaces writing this
-
 // This all needs to be in one file for Hackerrank
-// I might change the functions to go from taking a bitboard to operating on a Board struct.
-// Could save some hassle
 
 type Board struct {
 	player bool
@@ -49,14 +46,7 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	PrintBoard(b)
-
-	//if UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures()) != 0 {
-	//	move := (Bitscan(UpRightCaptureSource(b.whiteDiscs, b.WhiteDiscCaptures())))
-	//	b.CaptureWhiteDiscUpRight(move)
-	//	PrintBoardWithBitBoard(b, b.WhiteDiscCaptures())
-	//}
-	//PrintBitBoard(DownLeftCaptureSource(b.blackDiscs, b.BlackDiscCaptures()))
+	AlphaBeta(player, b, -1, 1, 1)
 }
 
 func AlphaBeta(player bool, board Board, alpha int32, beta int32, depth uint8) int32 {
@@ -64,16 +54,41 @@ func AlphaBeta(player bool, board Board, alpha int32, beta int32, depth uint8) i
 	if depth == 0 || board.blackPieces == 0 || board.whitePieces == 0 {
 	} else {
 		if player {
-			if board.BlackDiscCaptures() != 0 {
-			} else if board.BlackKingCaptures() != 0 {
-			} else if board.BlackKingMoves() != 0 {
-			} else if board.BlackDiscMoves() != 0 {
+			if board.BlackDiscCaptures() != 0 || board.BlackKingCaptures() != 0 {
+				if board.BlackDiscCaptures() != 0 {
+				}
+				if board.BlackKingCaptures() != 0 {
+				}
+			} else {
+				if board.BlackKingMoves() != 0 {
+				} else if board.BlackDiscMoves() != 0 {
+					DownLeftMoves := DownLeftMoveSource(board.blackDiscs, board.BlackDiscMoves())
+					DownRightMoves := DownRightMoveSource(board.blackDiscs, board.BlackDiscMoves())
+					for DownLeftMoves != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.MoveBlackDiscDownLeft(Bitscan(DownLeftMoves))
+						// Remove move from potential moves
+						DownLeftMoves = DownLeftMoves &^ (1 << Bitscan(DownLeftMoves))
+					}
+					for DownRightMoves != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.MoveBlackDiscDownRight(Bitscan(DownRightMoves))
+						// Remove move from potential moves
+						DownRightMoves = DownRightMoves &^ (1 << Bitscan(DownRightMoves))
+					}
+				} else {
+					return math.MinInt32
+				}
 			}
 		} else {
 			if board.WhiteDiscCaptures() != 0 {
 			} else if board.WhiteKingCaptures() != 0 {
-			} else if board.WhiteKingMoves() != 0 {
-			} else if board.WhiteDiscMoves() != 0 {
+			} else {
+				if board.WhiteKingMoves() != 0 {
+				} else if board.WhiteDiscMoves() != 0 {
+				} else {
+					// Make this lose for this side
+				}
 			}
 		}
 	}
