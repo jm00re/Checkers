@@ -61,7 +61,37 @@ func AlphaBeta(player bool, board Board, alpha int32, beta int32, depth uint8) i
 				}
 			} else {
 				if board.BlackKingMoves() != 0 {
-				} else if board.BlackDiscMoves() != 0 {
+					DownLeftMoves := DownLeftMoveSource(board.blackKings, board.BlackKingMoves())
+					DownRightMoves := DownRightMoveSource(board.blackKings, board.BlackKingMoves())
+					UpLeftMoves := UpLeftMoveSource(board.blackKings, board.BlackKingMoves())
+					UpRightMoves := UpRightMoveSource(board.blackKings, board.BlackKingMoves())
+					for DownLeftMoves != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.MoveBlackKingDownLeft(Bitscan(DownLeftMoves))
+						// Remove move from potential moves
+						DownLeftMoves = DownLeftMoves &^ (1 << Bitscan(DownLeftMoves))
+					}
+					for DownRightMoves != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.MoveBlackKingDownRight(Bitscan(DownRightMoves))
+						// Remove move from potential moves
+						DownRightMoves = DownRightMoves &^ (1 << Bitscan(DownRightMoves))
+					}
+					for UpLeftMoves != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.MoveBlackKingUpLeft(Bitscan(UpLeftMoves))
+						// Remove move from potential moves
+						UpLeftMoves = UpLeftMoves &^ (1 << Bitscan(UpLeftMoves))
+					}
+					for UpRightMoves != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.MoveBlackKingUpRight(Bitscan(UpRightMoves))
+						// Remove move from potential moves
+						UpRightMoves = UpRightMoves &^ (1 << Bitscan(UpRightMoves))
+					}
+
+				}
+				if board.BlackDiscMoves() != 0 {
 					DownLeftMoves := DownLeftMoveSource(board.blackDiscs, board.BlackDiscMoves())
 					DownRightMoves := DownRightMoveSource(board.blackDiscs, board.BlackDiscMoves())
 					for DownLeftMoves != 0 {
