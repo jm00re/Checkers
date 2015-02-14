@@ -57,6 +57,20 @@ func AlphaBeta(player bool, board Board, alpha int32, beta int32, depth uint8) i
 		if player {
 			if board.BlackDiscCaptures() != 0 || board.BlackKingCaptures() != 0 {
 				if board.BlackDiscCaptures() != 0 {
+					// Need to make this loop for continous captures
+					// I think I'm going to seperate the whole capture dealie into a seperate func
+					downLeftCaptures := DownLeftCaptureSource(board.blackDiscs, board.BlackDiscCaptures())
+					downRightCaptures := DownRightCaptureSource(board.blackDiscs, board.BlackDiscCaptures())
+					for downLeftCaptures != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.CaptureBlackDiscDownLeft(Bitscan(downLeftCaptures))
+						downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
+					}
+					for downRightCaptures != 0 {
+						newBoard := board.CopyBoard()
+						newBoard.CaptureBlackDiscDownRight(Bitscan(downRightCaptures))
+						downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
+					}
 				}
 				if board.BlackKingCaptures() != 0 {
 				}
@@ -130,6 +144,11 @@ func AlphaBeta(player bool, board Board, alpha int32, beta int32, depth uint8) i
 	}
 	// to make it compile
 	return 0
+}
+
+func (b Board) EvalBoard() int32 {
+	return (int32(b.blackDiscs) - int32(b.whiteDiscs)) +
+		(int32(b.blackKings) - int32(b.whiteKings))
 }
 
 func (b Board) CopyBoard() (newBoard Board) {
@@ -360,7 +379,7 @@ func (b *Board) CaptureWhiteKingUpRight(move uint8) {
 }
 
 func (b *Board) NextPlayer() {
-	b.Player = !b.Player
+	b.player = !b.player
 }
 
 func (b *Board) NewBlackKings() {
