@@ -11,6 +11,7 @@ import (
 )
 
 // I think vim is a super power after needing to do so many find and replaces writing this
+// The above statement stands
 // This all needs to be in one file for Hackerrank
 
 type Board struct {
