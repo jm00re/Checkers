@@ -50,33 +50,13 @@ func main() {
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
 
-	upLeftMoves := UpLeftMoveSource(b.whiteDiscs, b.WhiteDiscMoves())
-	upRightMoves := UpRightMoveSource(b.whiteDiscs, b.WhiteDiscMoves())
-	for upLeftMoves != 0 {
-		newBoard := b.CopyBoard()
-		newBoard.MoveWhiteDiscUpLeft(Bitscan(upLeftMoves))
-		upLeftMoves = upLeftMoves &^ (1 << Bitscan(upLeftMoves))
-		newBoard.NextPlayer()
-		fmt.Println()
-		PrintBoard(newBoard)
-		//boards = append(boards, newBoard)
-	}
-
-	for upRightMoves != 0 {
-		newBoard := b.CopyBoard()
-		newBoard.MoveWhiteDiscUpRight(Bitscan(upRightMoves))
-		upRightMoves = upRightMoves &^ (1 << Bitscan(upRightMoves))
-		newBoard.NextPlayer()
-		fmt.Println()
-		PrintBoard(newBoard)
-	}
-
 	//n := NextCaptureBoardStates(b)
 	//fmt.Println(AlphaBeta(b, math.MinInt32, math.MaxInt32, 6))
+	fmt.Println(AlphaBeta(b, -666, 666, 6))
 	//PrintBoard(b)
 	//for _, newBoard := range n {
 	//	fmt.Println()
-	//	PrintBoard(newBoard)
+	//	//PrintBoard(newBoard)
 	//}
 }
 
@@ -387,7 +367,6 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 				if board.BlackDiscMoves() != 0 {
 					nextBoards := NextMoveBoardStates(board)
 					for _, tempBoard := range nextBoards {
-						PrintBoard(tempBoard)
 						fmt.Println()
 						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
 					}
@@ -443,11 +422,12 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 }
 
 func (b Board) EvalBoard() int32 {
-	//fmt.Println(int32(b.blackDiscs) - int32(b.whiteDiscs))
+	temp := (int32(PopCount(b.blackDiscs)) - int32(PopCount(b.whiteDiscs))) +
+		(int32(PopCount(b.blackKings)) - int32(PopCount(b.whiteKings)))
+	fmt.Println("WUT", temp)
+
 	return (int32(PopCount(b.blackDiscs)) - int32(PopCount(b.whiteDiscs))) +
 		(int32(PopCount(b.blackKings)) - int32(PopCount(b.whiteKings)))
-	//return (int32(b.blackDiscs) - int32(b.whiteDiscs)) +
-	//	(int32(b.blackKings) - int32(b.whiteKings))
 }
 
 func (b Board) CopyBoard() (newBoard Board) {
