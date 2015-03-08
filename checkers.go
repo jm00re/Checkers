@@ -351,31 +351,15 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 	} else {
 		if board.player {
 			if board.BlackDiscCaptures() != 0 || board.BlackKingCaptures() != 0 {
-				if board.BlackDiscCaptures() != 0 {
-					nextBoards := NextCaptureBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
-				}
-				if board.BlackKingCaptures() != 0 {
-					nextBoards := NextCaptureBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
+				nextBoards := NextCaptureBoardStates(board)
+				for _, tempBoard := range nextBoards {
+					alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
 				}
 			} else if board.BlackDiscMoves() != 0 || board.BlackKingMoves() != 0 {
-				if board.BlackDiscMoves() != 0 {
-					nextBoards := NextMoveBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						fmt.Println()
-						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
-				}
-				if board.BlackKingMoves() != 0 {
-					nextBoards := NextMoveBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
+				nextBoards := NextMoveBoardStates(board)
+				for _, tempBoard := range nextBoards {
+					fmt.Println()
+					alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
 				}
 			} else {
 				return math.MinInt32
@@ -384,30 +368,14 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 			return alpha
 		} else {
 			if board.WhiteDiscCaptures() != 0 || board.WhiteKingCaptures() != 0 {
-				if board.WhiteDiscCaptures() != 0 {
-					nextBoards := NextCaptureBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
-				}
-				if board.WhiteKingCaptures() != 0 {
-					nextBoards := NextCaptureBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
+				nextBoards := NextCaptureBoardStates(board)
+				for _, tempBoard := range nextBoards {
+					beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
 				}
 			} else if board.WhiteDiscMoves() != 0 || board.WhiteKingMoves() != 0 {
-				if board.WhiteDiscMoves() != 0 {
-					nextBoards := NextMoveBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
-				}
-				if board.WhiteKingMoves() != 0 {
-					nextBoards := NextMoveBoardStates(board)
-					for _, tempBoard := range nextBoards {
-						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
-					}
+				nextBoards := NextMoveBoardStates(board)
+				for _, tempBoard := range nextBoards {
+					beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
 				}
 			} else {
 				PrintBoard(board)
