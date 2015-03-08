@@ -29,16 +29,18 @@ type Board struct {
 }
 
 // Bitmasks
-const removeLeft uint32 = 0xefefefef
-const removeRight uint32 = 0xf7f7f7f7
-const removeRightTwo uint32 = 0x77777777
-const removeLeftTwo uint32 = 0xeeeeeeee
-const removeBack uint32 = 0xfffffff
-const removeFront uint32 = 0xfffffff0
-const keepFront uint32 = 0xf
-const keepBack uint32 = 0xf0000000
-const evenRows uint32 = 0xf0f0f0f
-const oddRows uint32 = 0xf0f0f0f0
+const (
+	removeLeft     uint32 = 0xefefefef
+	removeRight    uint32 = 0xf7f7f7f7
+	removeRightTwo uint32 = 0x77777777
+	removeLeftTwo  uint32 = 0xeeeeeeee
+	removeBack     uint32 = 0xfffffff
+	removeFront    uint32 = 0xfffffff0
+	keepFront      uint32 = 0xf
+	keepBack       uint32 = 0xf0000000
+	evenRows       uint32 = 0xf0f0f0f
+	oddRows        uint32 = 0xf0f0f0f0
+)
 
 // Bitscan msv lookup table
 var bitscanLookup = [32]uint8{0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30, 8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31}
