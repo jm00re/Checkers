@@ -49,12 +49,35 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	n := NextCaptureBoardStates(b)
-	PrintBoard(b)
-	for _, newBoard := range n {
+
+	upLeftMoves := UpLeftMoveSource(b.whiteDiscs, b.WhiteDiscMoves())
+	upRightMoves := UpRightMoveSource(b.whiteDiscs, b.WhiteDiscMoves())
+	for upLeftMoves != 0 {
+		newBoard := b.CopyBoard()
+		newBoard.MoveWhiteDiscUpLeft(Bitscan(upLeftMoves))
+		upLeftMoves = upLeftMoves &^ (1 << Bitscan(upLeftMoves))
+		newBoard.NextPlayer()
+		fmt.Println()
+		PrintBoard(newBoard)
+		//boards = append(boards, newBoard)
+	}
+
+	for upRightMoves != 0 {
+		newBoard := b.CopyBoard()
+		newBoard.MoveWhiteDiscUpRight(Bitscan(upRightMoves))
+		upRightMoves = upRightMoves &^ (1 << Bitscan(upRightMoves))
+		newBoard.NextPlayer()
 		fmt.Println()
 		PrintBoard(newBoard)
 	}
+
+	//n := NextCaptureBoardStates(b)
+	//fmt.Println(AlphaBeta(b, math.MinInt32, math.MaxInt32, 6))
+	//PrintBoard(b)
+	//for _, newBoard := range n {
+	//	fmt.Println()
+	//	PrintBoard(newBoard)
+	//}
 }
 
 func NextMoveBoardStates(board Board) (boards []Board) {
@@ -260,11 +283,6 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 			}
 		} else {
 			if board.WhiteDiscCaptures() != 0 {
-				// Need to make this loop for continous captures
-				// I think I'm going to seperate the whole capture dealie into a seperate func
-				// Doing the captures recursively makes the most sense I think
-				// Maybe adding a flag to AlphaBeta to continue captures would work
-				// I'm going to let this be for now though
 				upLeftCaptures := UpLeftCaptureSource(board.whiteDiscs, board.WhiteDiscCaptures())
 				upRightCaptures := UpRightCaptureSource(board.whiteDiscs, board.WhiteDiscCaptures())
 				for upLeftCaptures != 0 {
@@ -348,17 +366,76 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 	// If max depth or one side doesn't have pieces
 	if depth == 0 || board.blackPieces == 0 || board.whitePieces == 0 {
+		fmt.Println("eval", board.EvalBoard())
 		return board.EvalBoard()
 	} else {
 		if board.player {
 			if board.BlackDiscCaptures() != 0 || board.BlackKingCaptures() != 0 {
+				if board.BlackDiscCaptures() != 0 {
+					nextBoards := NextCaptureBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
+				if board.BlackKingCaptures() != 0 {
+					nextBoards := NextCaptureBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
+			} else if board.BlackDiscMoves() != 0 || board.BlackKingMoves() != 0 {
+				if board.BlackDiscMoves() != 0 {
+					nextBoards := NextMoveBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						PrintBoard(tempBoard)
+						fmt.Println()
+						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
+				if board.BlackKingMoves() != 0 {
+					nextBoards := NextMoveBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
 			} else {
 				return math.MinInt32
 			}
+			fmt.Println("alpha", alpha)
+			return alpha
 		} else {
 			if board.WhiteDiscCaptures() != 0 || board.WhiteKingCaptures() != 0 {
+				if board.WhiteDiscCaptures() != 0 {
+					nextBoards := NextCaptureBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
+				if board.WhiteKingCaptures() != 0 {
+					nextBoards := NextCaptureBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
+			} else if board.WhiteDiscMoves() != 0 || board.WhiteKingMoves() != 0 {
+				if board.WhiteDiscMoves() != 0 {
+					nextBoards := NextMoveBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
+				if board.WhiteKingMoves() != 0 {
+					nextBoards := NextMoveBoardStates(board)
+					for _, tempBoard := range nextBoards {
+						beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					}
+				}
 			} else {
+				PrintBoard(board)
+				return math.MaxInt32
 			}
+			fmt.Println("beta", beta)
+			return beta
 		}
 	}
 	// to make it compile
@@ -366,8 +443,11 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 }
 
 func (b Board) EvalBoard() int32 {
-	return (int32(b.blackDiscs) - int32(b.whiteDiscs)) +
-		(int32(b.blackKings) - int32(b.whiteKings))
+	//fmt.Println(int32(b.blackDiscs) - int32(b.whiteDiscs))
+	return (int32(PopCount(b.blackDiscs)) - int32(PopCount(b.whiteDiscs))) +
+		(int32(PopCount(b.blackKings)) - int32(PopCount(b.whiteKings)))
+	//return (int32(b.blackDiscs) - int32(b.whiteDiscs)) +
+	//	(int32(b.blackKings) - int32(b.whiteKings))
 }
 
 func (b Board) CopyBoard() (newBoard Board) {
@@ -404,14 +484,14 @@ func (b *Board) MoveBlackDiscDownLeft(move uint8) {
 }
 
 func (b *Board) MoveWhiteDiscUpRight(move uint8) {
-	b.whiteDiscs = MoveDownRight(move, b.whiteDiscs)
+	b.whiteDiscs = MoveUpRight(move, b.whiteDiscs)
 	b.NewWhiteKings()
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveWhiteDiscUpLeft(move uint8) {
-	b.whiteDiscs = MoveDownLeft(move, b.whiteDiscs)
+	b.whiteDiscs = MoveUpLeft(move, b.whiteDiscs)
 	b.NewBlackKings()
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.occupied = b.blackPieces | b.whitePieces
@@ -431,13 +511,13 @@ func (b *Board) MoveBlackKingDownLeft(move uint8) {
 }
 
 func (b *Board) MoveBlackKingUpRight(move uint8) {
-	b.blackKings = MoveDownRight(move, b.blackKings)
+	b.blackKings = MoveUpRight(move, b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveBlackKingUpLeft(move uint8) {
-	b.blackKings = MoveDownLeft(move, b.blackKings)
+	b.blackKings = MoveUpLeft(move, b.blackKings)
 	b.blackPieces = b.blackDiscs | b.blackKings
 	b.occupied = b.blackPieces | b.whitePieces
 }
@@ -456,13 +536,13 @@ func (b *Board) MoveWhiteKingDownLeft(move uint8) {
 }
 
 func (b *Board) MoveWhiteKingUpRight(move uint8) {
-	b.whiteKings = MoveDownRight(move, b.whiteKings)
+	b.whiteKings = MoveUpRight(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.occupied = b.blackPieces | b.whitePieces
 }
 
 func (b *Board) MoveWhiteKingUpLeft(move uint8) {
-	b.whiteKings = MoveDownLeft(move, b.whiteKings)
+	b.whiteKings = MoveUpLeft(move, b.whiteKings)
 	b.whitePieces = b.whiteDiscs | b.whiteKings
 	b.occupied = b.blackPieces | b.whitePieces
 }
