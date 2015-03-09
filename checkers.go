@@ -83,12 +83,8 @@ func GenerateMoveCoordinates(b1 Board, b2 Board) {
 			pos2 += 1
 		}
 	}
-	fmt.Println()
 	PosToHackerrank(pos1 - 1)
 	PosToHackerrank(pos2 - 1)
-	fmt.Println()
-	fmt.Println(pos1 - 1)
-	fmt.Println(pos2 - 1)
 }
 
 func DetermineBestMove(b Board, depth uint8) {
@@ -126,10 +122,22 @@ func DetermineBestMove(b Board, depth uint8) {
 			}
 		}
 	}
-	PrintBoard(b)
-	PrintBoard(bestBoard)
-	fmt.Println(bestScore)
-	GenerateMoveCoordinates(b, bestBoard)
+	if b.player {
+		if b.BlackDiscCaptures() != 0 {
+		} else {
+			fmt.Println("1")
+			GenerateMoveCoordinates(b, bestBoard)
+		}
+	} else {
+		if b.WhiteDiscCaptures() != 0 {
+		} else {
+			fmt.Println("1")
+			GenerateMoveCoordinates(b, bestBoard)
+		}
+	}
+	//PrintBoard(b)
+	//PrintBoard(bestBoard)
+	//fmt.Println(bestScore)
 }
 
 func NextMoveBoardStates(board Board) (boards []Board) {
