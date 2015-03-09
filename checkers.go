@@ -52,12 +52,21 @@ func main() {
 
 	//n := NextCaptureBoardStates(b)
 	//fmt.Println(AlphaBeta(b, math.MinInt32, math.MaxInt32, 6))
+	//PrintBitBoard(b.DownLeftBlackDiscCaptures())
+	//PrintBitBoard(b.DownRightBlackDiscCaptures())
+	//PrintBitBoard(b.UpLeftWhiteDiscCaptures())
+	//PrintBitBoard(b.UpRightWhiteDiscCaptures())
+	//fmt.Println()
+	//PrintBitBoard(b.WhiteDiscCaptures())
+	PrintBoard(b)
+
+	nextBoards := NextCaptureBoardStates(b)
+	for _, tempBoard := range nextBoards {
+		fmt.Println()
+		PrintBoard(tempBoard)
+	}
+
 	fmt.Println(AlphaBeta(b, -666, 666, 6))
-	//PrintBoard(b)
-	//for _, newBoard := range n {
-	//	fmt.Println()
-	//	//PrintBoard(newBoard)
-	//}
 }
 
 func NextMoveBoardStates(board Board) (boards []Board) {
@@ -179,163 +188,161 @@ func NextMoveBoardStates(board Board) (boards []Board) {
 
 func NextCaptureBoardStates(board Board) (boards []Board) {
 	if board.player {
-		if board.BlackDiscCaptures() != 0 || board.BlackKingCaptures() != 0 {
-			if board.BlackDiscCaptures() != 0 {
-				// Need to make this loop for continous captures
-				// I think I'm going to seperate the whole capture dealie into a seperate func
-				// Doing the captures recursively makes the most sense I think
-				// Maybe adding a flag to AlphaBeta to continue captures would work
-				// I'm going to let this be for now though
-				downLeftCaptures := DownLeftCaptureSource(board.blackDiscs, board.BlackDiscCaptures())
-				downRightCaptures := DownRightCaptureSource(board.blackDiscs, board.BlackDiscCaptures())
-				for downLeftCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureBlackDiscDownLeft(Bitscan(downLeftCaptures))
-					downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
-					if newBoard.BlackDiscCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
-				}
-				for downRightCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureBlackDiscDownRight(Bitscan(downRightCaptures))
-					downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
-					if newBoard.BlackDiscCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
+		if board.BlackDiscCaptures() != 0 {
+			// Need to make this loop for continous captures
+			// I think I'm going to seperate the whole capture dealie into a seperate func
+			// Doing the captures recursively makes the most sense I think
+			// Maybe adding a flag to AlphaBeta to continue captures would work
+			// I'm going to let this be for now though
+			downLeftCaptures := DownLeftCaptureSource(board.blackDiscs, board.DownRightBlackDiscCaptures())
+			downRightCaptures := DownRightCaptureSource(board.blackDiscs, board.DownRightBlackDiscCaptures())
+			for downLeftCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureBlackDiscDownLeft(Bitscan(downLeftCaptures))
+				downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
+				if newBoard.BlackDiscCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
 				}
 			}
-			if board.BlackKingCaptures() != 0 {
-				downLeftCaptures := DownLeftCaptureSource(board.blackKings, board.BlackKingCaptures())
-				downRightCaptures := DownRightCaptureSource(board.blackKings, board.BlackKingCaptures())
-				upLeftCaptures := UpLeftCaptureSource(board.blackKings, board.BlackKingCaptures())
-				upRightCaptures := UpRightCaptureSource(board.blackKings, board.BlackKingCaptures())
-				for downLeftCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureBlackKingDownLeft(Bitscan(downLeftCaptures))
-					downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
-					if newBoard.BlackKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
-				}
-				for downRightCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureBlackKingDownRight(Bitscan(downRightCaptures))
-					downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
-					if newBoard.BlackKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
-				}
-				for upLeftCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureBlackKingUpLeft(Bitscan(upLeftCaptures))
-					upLeftCaptures = upLeftCaptures &^ (1 << Bitscan(upLeftCaptures))
-					if newBoard.BlackKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
-				}
-				for upRightCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureBlackKingUpRight(Bitscan(upRightCaptures))
-					upRightCaptures = upRightCaptures &^ (1 << Bitscan(upRightCaptures))
-					if newBoard.BlackKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
+			for downRightCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureBlackDiscDownRight(Bitscan(downRightCaptures))
+				downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
+				if newBoard.BlackDiscCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
 				}
 			}
-		} else {
-			if board.WhiteDiscCaptures() != 0 {
-				upLeftCaptures := UpLeftCaptureSource(board.whiteDiscs, board.WhiteDiscCaptures())
-				upRightCaptures := UpRightCaptureSource(board.whiteDiscs, board.WhiteDiscCaptures())
-				for upLeftCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureWhiteDiscUpLeft(Bitscan(upLeftCaptures))
-					upLeftCaptures = upLeftCaptures &^ (1 << Bitscan(upLeftCaptures))
-					if newBoard.WhiteDiscCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
-				}
-				for upRightCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureWhiteDiscUpRight(Bitscan(upRightCaptures))
-					upRightCaptures = upRightCaptures &^ (1 << Bitscan(upRightCaptures))
-					if newBoard.WhiteDiscCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
+		}
+		if board.BlackKingCaptures() != 0 {
+			downLeftCaptures := DownLeftCaptureSource(board.blackKings, board.DownLeftBlackKingCaptures())
+			downRightCaptures := DownRightCaptureSource(board.blackKings, board.DownRightBlackKingCaptures())
+			upLeftCaptures := UpLeftCaptureSource(board.blackKings, board.UpLeftBlackKingCaptures())
+			upRightCaptures := UpRightCaptureSource(board.blackKings, board.UpRightBlackKingCaptures())
+			for downLeftCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureBlackKingDownLeft(Bitscan(downLeftCaptures))
+				downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
+				if newBoard.BlackKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
 				}
 			}
-			if board.WhiteKingCaptures() != 0 {
-				downLeftCaptures := DownLeftCaptureSource(board.whiteKings, board.WhiteKingCaptures())
-				downRightCaptures := DownRightCaptureSource(board.whiteKings, board.WhiteKingCaptures())
-				upLeftCaptures := UpLeftCaptureSource(board.whiteKings, board.WhiteKingCaptures())
-				upRightCaptures := UpRightCaptureSource(board.whiteKings, board.WhiteKingCaptures())
-				for downLeftCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureWhiteKingDownLeft(Bitscan(downLeftCaptures))
-					downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
-					if newBoard.WhiteKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
+			for downRightCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureBlackKingDownRight(Bitscan(downRightCaptures))
+				downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
+				if newBoard.BlackKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
 				}
-				for downRightCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureWhiteKingDownRight(Bitscan(downRightCaptures))
-					downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
-					if newBoard.WhiteKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
+			}
+			for upLeftCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureBlackKingUpLeft(Bitscan(upLeftCaptures))
+				upLeftCaptures = upLeftCaptures &^ (1 << Bitscan(upLeftCaptures))
+				if newBoard.BlackKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
 				}
-				for upLeftCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureWhiteKingUpLeft(Bitscan(upLeftCaptures))
-					upLeftCaptures = upLeftCaptures &^ (1 << Bitscan(upLeftCaptures))
-					if newBoard.WhiteKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
+			}
+			for upRightCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureBlackKingUpRight(Bitscan(upRightCaptures))
+				upRightCaptures = upRightCaptures &^ (1 << Bitscan(upRightCaptures))
+				if newBoard.BlackKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
 				}
-				for upRightCaptures != 0 {
-					newBoard := board.CopyBoard()
-					newBoard.CaptureWhiteKingUpRight(Bitscan(upRightCaptures))
-					upRightCaptures = upRightCaptures &^ (1 << Bitscan(upRightCaptures))
-					if newBoard.WhiteKingCaptures() != 0 {
-						boards = append(boards, NextCaptureBoardStates(newBoard)...)
-					} else {
-						board.NextPlayer()
-						boards = append(boards, newBoard)
-					}
+			}
+		}
+	} else {
+		if board.WhiteDiscCaptures() != 0 {
+			upLeftCaptures := UpLeftCaptureSource(board.whiteDiscs, board.UpLeftWhiteDiscCaptures())
+			upRightCaptures := UpRightCaptureSource(board.whiteDiscs, board.UpRightWhiteDiscCaptures())
+			for upLeftCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureWhiteDiscUpLeft(Bitscan(upLeftCaptures))
+				upLeftCaptures = upLeftCaptures &^ (1 << Bitscan(upLeftCaptures))
+				if newBoard.WhiteDiscCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
+				}
+			}
+			for upRightCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureWhiteDiscUpRight(Bitscan(upRightCaptures))
+				upRightCaptures = upRightCaptures &^ (1 << Bitscan(upRightCaptures))
+				if newBoard.WhiteDiscCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
+				}
+			}
+		}
+		if board.WhiteKingCaptures() != 0 {
+			downLeftCaptures := DownLeftCaptureSource(board.whiteKings, board.DownLeftWhiteKingCaptures())
+			downRightCaptures := DownRightCaptureSource(board.whiteKings, board.DownRightWhiteKingCaptures())
+			upLeftCaptures := UpLeftCaptureSource(board.whiteKings, board.UpLeftWhiteKingCaptures())
+			upRightCaptures := UpRightCaptureSource(board.whiteKings, board.UpRightWhiteKingCaptures())
+			for downLeftCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureWhiteKingDownLeft(Bitscan(downLeftCaptures))
+				downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
+				if newBoard.WhiteKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
+				}
+			}
+			for downRightCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureWhiteKingDownRight(Bitscan(downRightCaptures))
+				downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
+				if newBoard.WhiteKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
+				}
+			}
+			for upLeftCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureWhiteKingUpLeft(Bitscan(upLeftCaptures))
+				upLeftCaptures = upLeftCaptures &^ (1 << Bitscan(upLeftCaptures))
+				if newBoard.WhiteKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
+				}
+			}
+			for upRightCaptures != 0 {
+				newBoard := board.CopyBoard()
+				newBoard.CaptureWhiteKingUpRight(Bitscan(upRightCaptures))
+				upRightCaptures = upRightCaptures &^ (1 << Bitscan(upRightCaptures))
+				if newBoard.WhiteKingCaptures() != 0 {
+					boards = append(boards, NextCaptureBoardStates(newBoard)...)
+				} else {
+					board.NextPlayer()
+					boards = append(boards, newBoard)
 				}
 			}
 		}
@@ -358,7 +365,6 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 			} else if board.BlackDiscMoves() != 0 || board.BlackKingMoves() != 0 {
 				nextBoards := NextMoveBoardStates(board)
 				for _, tempBoard := range nextBoards {
-					fmt.Println()
 					alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
 				}
 			} else {
@@ -378,15 +384,15 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 					beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
 				}
 			} else {
-				PrintBoard(board)
 				return math.MaxInt32
 			}
-			fmt.Println("beta", beta)
+			if beta == 666 {
+				fmt.Println()
+				PrintBoard(board)
+			}
 			return beta
 		}
 	}
-	// to make it compile
-	return 0
 }
 
 func (b Board) EvalBoard() int32 {
@@ -733,6 +739,11 @@ func UpLeftCaptureSource(bb1 uint32, bb2 uint32) uint32 {
 // Performing a shift and then doing it again for the other rows
 // After all the potential moves have been calc'd I mask the taken spaces
 // I messed this up orginally and didn't realize I needed to shift the rows differently
+
+// So I messed this up and actually need to seperate the captures into seperate direction captures because there's some edges cases were this doesn't work.
+// I could probably refactor a bunch of this to reduce redundency but I just want this to actually play checkers. I'm just going to use what I learn from this to write a better reversi AI.
+
+// If I get around to it I'm going to refactor this into way fewer functions. I can take the xxxDiscCaptures functions, have them return the discs that can capture, not the resulting space. I could do the same thing for moves and cut out a whole bunch of the code.
 func (b Board) BlackDiscMoves() uint32 {
 	return (((b.blackDiscs & removeLeft & oddRows) << 3) |
 		((b.blackDiscs & oddRows) << 4) |
@@ -753,6 +764,21 @@ func (b Board) BlackDiscCaptures() uint32 {
 			(b.whitePieces)) << 5)) &^ b.occupied
 }
 
+// I need these because dealing with the downleft and right captures together doesn't work
+func (b Board) DownLeftBlackDiscCaptures() uint32 {
+	return (((((b.blackDiscs & removeLeftTwo & evenRows) << 4) &
+		(b.whitePieces)) << 3) |
+		((((b.blackDiscs & removeLeftTwo & oddRows) << 3) &
+			(b.whitePieces)) << 4)) &^ b.occupied
+}
+
+func (b Board) DownRightBlackDiscCaptures() uint32 {
+	return (((((b.blackDiscs & removeRightTwo & evenRows) << 5) &
+		(b.whitePieces)) << 4) |
+		((((b.blackDiscs & removeRightTwo & oddRows) << 4) &
+			(b.whitePieces)) << 5)) &^ b.occupied
+}
+
 func (b Board) WhiteDiscMoves() uint32 {
 	// Same dealie as BlackDiscMoves
 	return (((b.whiteDiscs & oddRows) >> 4) |
@@ -769,6 +795,20 @@ func (b Board) WhiteDiscCaptures() uint32 {
 			(b.blackPieces)) >> 4) |
 		((((b.whiteDiscs & removeRightTwo & evenRows) >> 3) &
 			(b.blackPieces)) >> 4) |
+		((((b.whiteDiscs & removeRightTwo & oddRows) >> 4) &
+			(b.blackPieces)) >> 3)) &^ b.occupied
+}
+
+func (b Board) UpLeftWhiteDiscCaptures() uint32 {
+	return (((((b.whiteDiscs & removeLeftTwo & evenRows) >> 4) &
+		(b.blackPieces)) >> 5) |
+		((((b.whiteDiscs & removeLeftTwo & oddRows) >> 5) &
+			(b.blackPieces)) >> 4)) &^ b.occupied
+}
+
+func (b Board) UpRightWhiteDiscCaptures() uint32 {
+	return (((((b.whiteDiscs & removeRightTwo & evenRows) >> 3) &
+		(b.blackPieces)) >> 4) |
 		((((b.whiteDiscs & removeRightTwo & oddRows) >> 4) &
 			(b.blackPieces)) >> 3)) &^ b.occupied
 }
@@ -823,6 +863,34 @@ func (b Board) BlackKingCaptures() uint32 {
 	return 0
 }
 
+func (b Board) DownLeftBlackKingCaptures() uint32 {
+	return (((((b.blackKings & removeLeftTwo & evenRows) << 4) &
+		(b.whitePieces)) << 3) |
+		((((b.blackKings & removeLeftTwo & oddRows) << 3) &
+			(b.whitePieces)) << 4)) &^ b.occupied
+}
+
+func (b Board) DownRightBlackKingCaptures() uint32 {
+	return (((((b.blackKings & removeRightTwo & evenRows) << 5) &
+		(b.whitePieces)) << 4) |
+		((((b.blackKings & removeRightTwo & oddRows) << 4) &
+			(b.whitePieces)) << 5)) &^ b.occupied
+}
+
+func (b Board) UpLeftBlackKingCaptures() uint32 {
+	return (((((b.blackKings & removeLeftTwo & evenRows) >> 4) &
+		(b.whitePieces)) >> 5) |
+		((((b.blackKings & removeLeftTwo & oddRows) >> 5) &
+			(b.whitePieces)) >> 4)) &^ b.occupied
+}
+
+func (b Board) UpRightBlackKingCaptures() uint32 {
+	return (((((b.blackKings & removeRightTwo & evenRows) >> 3) &
+		(b.whitePieces)) >> 4) |
+		((((b.blackKings & removeRightTwo & oddRows) >> 4) &
+			(b.whitePieces)) >> 3)) &^ b.occupied
+}
+
 func (b Board) WhiteKingCaptures() uint32 {
 	if b.whiteKings != 0 {
 		return (((((b.whiteKings & removeLeftTwo & evenRows) << 4) &
@@ -843,6 +911,34 @@ func (b Board) WhiteKingCaptures() uint32 {
 				(b.blackPieces)) >> 3)) &^ b.occupied
 	}
 	return 0
+}
+
+func (b Board) DownLeftWhiteKingCaptures() uint32 {
+	return (((((b.whiteKings & removeLeftTwo & evenRows) << 4) &
+		(b.blackPieces)) << 3) |
+		((((b.whiteKings & removeLeftTwo & oddRows) << 3) &
+			(b.blackPieces)) << 4)) &^ b.occupied
+}
+
+func (b Board) DownRightWhiteKingCaptures() uint32 {
+	return (((((b.whiteKings & removeRightTwo & evenRows) << 5) &
+		(b.blackPieces)) << 4) |
+		((((b.whiteKings & removeRightTwo & oddRows) << 4) &
+			(b.blackPieces)) << 5)) &^ b.occupied
+}
+
+func (b Board) UpLeftWhiteKingCaptures() uint32 {
+	return (((((b.whiteKings & removeLeftTwo & evenRows) >> 4) &
+		(b.blackPieces)) >> 5) |
+		((((b.whiteKings & removeLeftTwo & oddRows) >> 5) &
+			(b.blackPieces)) >> 4)) &^ b.occupied
+}
+
+func (b Board) UpRightWhiteKingCaptures() uint32 {
+	return (((((b.whiteKings & removeRightTwo & evenRows) >> 3) &
+		(b.blackPieces)) >> 4) |
+		((((b.whiteKings & removeRightTwo & oddRows) >> 4) &
+			(b.blackPieces)) >> 3)) &^ b.occupied
 }
 
 // I straight up stole this from Kim Walisch ala https://chessprogramming.wikispaces.com/Kim+Walisch
@@ -897,16 +993,17 @@ func PrintBitBoard(b uint32) {
 		}
 	}
 	fmt.Println()
+	fmt.Println()
 }
 
 func PrintBoardWithBitBoard(b Board, b2 uint32) {
 	// Shifts by i and checks if the value is 1.
 	// Prints the correct indictor based on the bitboard used
-	//if b.player {
-	//	fmt.Print("b")
-	//} else {
-	//	fmt.Print("w")
-	//}
+	if b.player {
+		fmt.Println("b")
+	} else {
+		fmt.Println("w")
+	}
 	var shift uint8
 	for i := 0; i < 32; i++ {
 		shift = uint8(i)
@@ -947,11 +1044,17 @@ func PrintBoardWithBitBoard(b Board, b2 uint32) {
 		}
 	}
 	fmt.Println()
+	fmt.Println()
 }
 
 func PrintBoard(b Board) {
 	// Shifts by i and checks if the value is 1.
 	// Prints the correct indictor based on the bitboard used
+	if b.player {
+		fmt.Println("b")
+	} else {
+		fmt.Println("w")
+	}
 	var shift uint8
 	for i := 0; i < 32; i++ {
 		shift = uint8(i)
