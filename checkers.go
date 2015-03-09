@@ -49,8 +49,87 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
+	//fmt.Println(AlphaBeta(b, int32(math.MinInt32), int32(math.MaxInt32), 9))
+	DetermineBestMove(b, uint8(10))
+}
 
-	fmt.Println(AlphaBeta(b, int32(math.MinInt32), int32(math.MaxInt32), 9))
+// So I could pass the last move as part of the struct, but that seems bloated so I'm just going to calculate the move that made this position a single time by diffing the two boards and working backwards.
+// This function finds the position changed from a movement, finds which piece moved, then finds the location that the piece moved to.
+
+func PosToHackerrank(pos uint) {
+	if (pos >= 0 && pos <= 3) || (pos >= 8 && pos <= 11) ||
+		(pos >= 16 && pos <= 19) || (pos >= 24 && pos <= 27) {
+		fmt.Println((pos / 4), 2*(pos%4)+1)
+	} else {
+		fmt.Println((pos / 4), 2*(pos%4))
+	}
+}
+
+func GenerateMoveCoordinates(b1 Board, b2 Board) {
+	pos1 := uint(1)
+	pos2 := uint(1)
+	if b1.player {
+		for uint32(((b1.blackDiscs^b2.blackDiscs)&b1.blackDiscs)>>pos1) != 0 {
+			pos1 += 1
+		}
+		for uint32(((b1.blackDiscs^b2.blackDiscs)&b2.blackDiscs)>>pos2) != 0 {
+			pos2 += 1
+		}
+	} else {
+		for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b1.whiteDiscs)>>pos1) != 0 {
+			pos1 += 1
+		}
+		for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b2.whiteDiscs)>>pos2) != 0 {
+			pos2 += 1
+		}
+	}
+	fmt.Println()
+	PosToHackerrank(pos1 - 1)
+	PosToHackerrank(pos2 - 1)
+	fmt.Println()
+	fmt.Println(pos1 - 1)
+	fmt.Println(pos2 - 1)
+}
+
+func DetermineBestMove(b Board, depth uint8) {
+	nextBoards := make([]Board, 10)
+	var bestBoard Board
+	if b.player {
+		if b.BlackDiscCaptures() != 0 {
+			nextBoards = NextCaptureBoardStates(b)
+		} else {
+			nextBoards = NextMoveBoardStates(b)
+		}
+	} else {
+		if b.WhiteDiscCaptures() != 0 {
+			nextBoards = NextCaptureBoardStates(b)
+		} else {
+			nextBoards = NextMoveBoardStates(b)
+		}
+	}
+
+	bestScore := AlphaBeta(nextBoards[0], int32(math.MinInt32), int32(math.MaxInt32), depth)
+	if b.player {
+		for _, board := range nextBoards {
+			score := AlphaBeta(board, int32(math.MinInt32), int32(math.MaxInt32), depth)
+			if score >= bestScore {
+				bestScore = score
+				bestBoard = board
+			}
+		}
+	} else {
+		for _, board := range nextBoards {
+			score := AlphaBeta(board, int32(math.MinInt32), int32(math.MaxInt32), depth)
+			if score <= bestScore {
+				bestScore = score
+				bestBoard = board
+			}
+		}
+	}
+	PrintBoard(b)
+	PrintBoard(bestBoard)
+	fmt.Println(bestScore)
+	GenerateMoveCoordinates(b, bestBoard)
 }
 
 func NextMoveBoardStates(board Board) (boards []Board) {
@@ -337,11 +416,9 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 	// If max depth or one side doesn't have pieces
 	if depth == 0 || board.blackPieces == 0 || board.whitePieces == 0 {
-		fmt.Println("eval", board.EvalBoard())
 		return board.EvalBoard()
 	} else {
 		if board.player {
-			fmt.Println("b")
 			v := int32(math.MinInt32)
 			if board.BlackDiscCaptures() != 0 || board.BlackKingCaptures() != 0 {
 				nextBoards := NextCaptureBoardStates(board)
@@ -370,7 +447,6 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 			return v
 		} else {
 			v := int32(math.MaxInt32)
-			fmt.Println("w")
 			if board.WhiteDiscCaptures() != 0 || board.WhiteKingCaptures() != 0 {
 				nextBoards := NextCaptureBoardStates(board)
 				for _, tempBoard := range nextBoards {
@@ -392,22 +468,18 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 			} else {
 				return math.MaxInt32
 			}
-			if beta == int32(math.MaxInt32) {
-				fmt.Println()
-				PrintBoard(board)
-			}
 			return v
 		}
 	}
 }
 
 func (b Board) EvalBoard() int32 {
-	temp := (int32(PopCount(b.blackDiscs)) - int32(PopCount(b.whiteDiscs))) +
-		(int32(PopCount(b.blackKings)) - int32(PopCount(b.whiteKings)))
-	fmt.Println("WUT", temp)
+	blackScore := 3*int32(PopCount(b.blackDiscs)) + 5*int32(PopCount(b.blackKings)) +
+		int32(PopCount(b.BlackDiscMoves()))
+	whiteScore := 3*int32(PopCount(b.whiteDiscs)) + 5*int32(PopCount(b.whiteKings)) +
+		int32(PopCount(b.WhiteDiscMoves()))
 
-	return (int32(PopCount(b.blackDiscs)) - int32(PopCount(b.whiteDiscs))) +
-		(int32(PopCount(b.blackKings)) - int32(PopCount(b.whiteKings)))
+	return blackScore - whiteScore
 }
 
 func (b Board) CopyBoard() (newBoard Board) {
