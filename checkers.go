@@ -65,6 +65,10 @@ func PosToHackerrank(pos uint) {
 	}
 }
 
+func GenerateCaptureCoordinates(b1 Board, b2 Board) {
+
+}
+
 func GenerateMoveCoordinates(b1 Board, b2 Board) {
 	pos1 := uint(1)
 	pos2 := uint(1)
@@ -153,8 +157,8 @@ func DetermineBestMove(b Board, depth uint8) {
 			GenerateMoveCoordinates(b, bestBoard)
 		}
 	}
-	//PrintBoard(b)
-	//PrintBoard(bestBoard)
+	PrintBoard(b)
+	PrintBoard(bestBoard)
 	//fmt.Println(bestScore)
 }
 
@@ -289,7 +293,7 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 				newBoard := board.CopyBoard()
 				newBoard.CaptureBlackDiscDownLeft(Bitscan(downLeftCaptures))
 				downLeftCaptures = downLeftCaptures &^ (1 << Bitscan(downLeftCaptures))
-				if newBoard.BlackDiscCaptures() != 0 {
+				if newBoard.BlackDiscCaptures() != 0 || newBoard.BlackKingCaptures() != 0 {
 					boards = append(boards, NextCaptureBoardStates(newBoard)...)
 				} else {
 					board.NextPlayer()
@@ -300,7 +304,7 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 				newBoard := board.CopyBoard()
 				newBoard.CaptureBlackDiscDownRight(Bitscan(downRightCaptures))
 				downRightCaptures = downRightCaptures &^ (1 << Bitscan(downRightCaptures))
-				if newBoard.BlackDiscCaptures() != 0 {
+				if newBoard.BlackDiscCaptures() != 0 || newBoard.BlackKingCaptures() != 0 {
 					boards = append(boards, NextCaptureBoardStates(newBoard)...)
 				} else {
 					board.NextPlayer()
@@ -366,7 +370,7 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 				newBoard := board.CopyBoard()
 				newBoard.CaptureWhiteDiscUpLeft(Bitscan(upLeftCaptures))
 				upLeftCaptures = upLeftCaptures &^ (1 << Bitscan(upLeftCaptures))
-				if newBoard.WhiteDiscCaptures() != 0 {
+				if newBoard.WhiteDiscCaptures() != 0 || newBoard.WhiteKingCaptures() != 0 {
 					boards = append(boards, NextCaptureBoardStates(newBoard)...)
 				} else {
 					board.NextPlayer()
@@ -377,7 +381,7 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 				newBoard := board.CopyBoard()
 				newBoard.CaptureWhiteDiscUpRight(Bitscan(upRightCaptures))
 				upRightCaptures = upRightCaptures &^ (1 << Bitscan(upRightCaptures))
-				if newBoard.WhiteDiscCaptures() != 0 {
+				if newBoard.WhiteDiscCaptures() != 0 || newBoard.WhiteKingCaptures() != 0 {
 					boards = append(boards, NextCaptureBoardStates(newBoard)...)
 				} else {
 					board.NextPlayer()
@@ -467,9 +471,9 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 			} else {
 				return math.MinInt32
 			}
-			if alpha == int32(math.MinInt32) {
-				PrintBoard(board)
-			}
+			//if alpha == int32(math.MinInt32) {
+			//	PrintBoard(board)
+			//}
 			return v
 		} else {
 			v := int32(math.MaxInt32)
