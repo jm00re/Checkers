@@ -69,18 +69,36 @@ func GenerateMoveCoordinates(b1 Board, b2 Board) {
 	pos1 := uint(1)
 	pos2 := uint(1)
 	if b1.player {
-		for uint32(((b1.blackDiscs^b2.blackDiscs)&b1.blackDiscs)>>pos1) != 0 {
-			pos1 += 1
-		}
-		for uint32(((b1.blackDiscs^b2.blackDiscs)&b2.blackDiscs)>>pos2) != 0 {
-			pos2 += 1
+		if (b1.blackKings ^ b2.blackKings) != 0 {
+			for uint32(((b1.blackKings^b2.blackKings)&b1.blackKings)>>pos1) != 0 {
+				pos1 += 1
+			}
+			for uint32(((b1.blackKings^b2.blackKings)&b2.blackKings)>>pos2) != 0 {
+				pos2 += 1
+			}
+		} else {
+			for uint32(((b1.blackDiscs^b2.blackDiscs)&b1.blackDiscs)>>pos1) != 0 {
+				pos1 += 1
+			}
+			for uint32(((b1.blackDiscs^b2.blackDiscs)&b2.blackDiscs)>>pos2) != 0 {
+				pos2 += 1
+			}
 		}
 	} else {
-		for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b1.whiteDiscs)>>pos1) != 0 {
-			pos1 += 1
-		}
-		for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b2.whiteDiscs)>>pos2) != 0 {
-			pos2 += 1
+		if (b1.blackKings ^ b2.blackKings) != 0 {
+			for uint32(((b1.whiteKings^b2.whiteKings)&b1.whiteKings)>>pos1) != 0 {
+				pos1 += 1
+			}
+			for uint32(((b1.whiteKings^b2.whiteKings)&b2.whiteKings)>>pos2) != 0 {
+				pos2 += 1
+			}
+		} else {
+			for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b1.whiteDiscs)>>pos1) != 0 {
+				pos1 += 1
+			}
+			for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b2.whiteDiscs)>>pos2) != 0 {
+				pos2 += 1
+			}
 		}
 	}
 	PosToHackerrank(pos1 - 1)
