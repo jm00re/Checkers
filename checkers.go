@@ -50,23 +50,7 @@ func main() {
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
 
-	//n := NextCaptureBoardStates(b)
-	//fmt.Println(AlphaBeta(b, math.MinInt32, math.MaxInt32, 6))
-	//PrintBitBoard(b.DownLeftBlackDiscCaptures())
-	//PrintBitBoard(b.DownRightBlackDiscCaptures())
-	//PrintBitBoard(b.UpLeftWhiteDiscCaptures())
-	//PrintBitBoard(b.UpRightWhiteDiscCaptures())
-	//fmt.Println()
-	//PrintBitBoard(b.WhiteDiscCaptures())
-	PrintBoard(b)
-
-	nextBoards := NextCaptureBoardStates(b)
-	for _, tempBoard := range nextBoards {
-		fmt.Println()
-		PrintBoard(tempBoard)
-	}
-
-	fmt.Println(AlphaBeta(b, -666, 666, 6))
+	fmt.Println(AlphaBeta(b, int32(math.MinInt32), int32(math.MaxInt32), 9))
 }
 
 func NextMoveBoardStates(board Board) (boards []Board) {
@@ -194,7 +178,7 @@ func NextCaptureBoardStates(board Board) (boards []Board) {
 			// Doing the captures recursively makes the most sense I think
 			// Maybe adding a flag to AlphaBeta to continue captures would work
 			// I'm going to let this be for now though
-			downLeftCaptures := DownLeftCaptureSource(board.blackDiscs, board.DownRightBlackDiscCaptures())
+			downLeftCaptures := DownLeftCaptureSource(board.blackDiscs, board.DownLeftBlackDiscCaptures())
 			downRightCaptures := DownRightCaptureSource(board.blackDiscs, board.DownRightBlackDiscCaptures())
 			for downLeftCaptures != 0 {
 				newBoard := board.CopyBoard()
@@ -357,40 +341,62 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 		return board.EvalBoard()
 	} else {
 		if board.player {
+			fmt.Println("b")
+			v := int32(math.MinInt32)
 			if board.BlackDiscCaptures() != 0 || board.BlackKingCaptures() != 0 {
 				nextBoards := NextCaptureBoardStates(board)
 				for _, tempBoard := range nextBoards {
-					alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					v = Max(v, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					alpha = Max(alpha, v)
+					if beta <= alpha {
+						break
+					}
 				}
 			} else if board.BlackDiscMoves() != 0 || board.BlackKingMoves() != 0 {
 				nextBoards := NextMoveBoardStates(board)
 				for _, tempBoard := range nextBoards {
-					alpha = Max(alpha, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					v = Max(v, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					alpha = Max(alpha, v)
+					if beta <= alpha {
+						break
+					}
 				}
 			} else {
 				return math.MinInt32
 			}
-			fmt.Println("alpha", alpha)
-			return alpha
+			if alpha == int32(math.MinInt32) {
+				PrintBoard(board)
+			}
+			return v
 		} else {
+			v := int32(math.MaxInt32)
+			fmt.Println("w")
 			if board.WhiteDiscCaptures() != 0 || board.WhiteKingCaptures() != 0 {
 				nextBoards := NextCaptureBoardStates(board)
 				for _, tempBoard := range nextBoards {
-					beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					v = Min(v, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					beta = Min(v, beta)
+					if beta <= alpha {
+						break
+					}
 				}
 			} else if board.WhiteDiscMoves() != 0 || board.WhiteKingMoves() != 0 {
 				nextBoards := NextMoveBoardStates(board)
 				for _, tempBoard := range nextBoards {
-					beta = Min(beta, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					v = Min(v, AlphaBeta(tempBoard, alpha, beta, depth-1))
+					beta = Min(v, beta)
+					if beta <= alpha {
+						break
+					}
 				}
 			} else {
 				return math.MaxInt32
 			}
-			if beta == 666 {
+			if beta == int32(math.MaxInt32) {
 				fmt.Println()
 				PrintBoard(board)
 			}
-			return beta
+			return v
 		}
 	}
 }
