@@ -49,7 +49,7 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	DetermineBestMove(b, uint8(1))
+	DetermineBestMove(b, uint8(8))
 }
 
 // So I could pass the last move as part of the struct, but that seems bloated so I'm just going to calculate the move that made this position a single time by diffing the two boards and working backwards.
@@ -79,7 +79,13 @@ func GenerateCaptureCoordinates(b1 Board, b2 Board) {
 		capturedPieces = (b1.blackPieces ^ b2.blackPieces)
 	}
 
-	//printThese := make([]uint8, 10)
+	PrintBoard(b1)
+	fmt.Println()
+	PrintBoard(b2)
+	PrintBitBoard(b1.whitePieces ^ b2.whitePieces)
+	PrintBitBoard(capturingPiece)
+	PrintBitBoard(endPos)
+	PrintBitBoard(capturedPieces)
 	var printThese []uint8
 	printThese = append(printThese, Bitscan(capturingPiece))
 
@@ -142,17 +148,20 @@ func DetermineBestMove(b Board, depth uint8) {
 	if b.player {
 		if b.BlackDiscCaptures() != 0 || b.BlackKingCaptures() != 0 {
 			nextBoards = NextCaptureBoardStates(b)
+			depth = 1
 		} else {
 			nextBoards = NextMoveBoardStates(b)
 		}
 	} else {
 		if b.WhiteDiscCaptures() != 0 || b.WhiteKingCaptures() != 0 {
 			nextBoards = NextCaptureBoardStates(b)
+			depth = 1
 		} else {
 			nextBoards = NextMoveBoardStates(b)
 		}
 	}
 
+	fmt.Println("Fuck")
 	bestScore := AlphaBeta(nextBoards[0], int32(math.MinInt32), int32(math.MaxInt32), depth)
 	if b.player {
 		for _, board := range nextBoards {
@@ -303,14 +312,13 @@ func NextMoveBoardStates(board Board) (boards []Board) {
 	return
 }
 
+// Capturing is broken if a capture "reveals" another capture.
 func NextCaptureBoardStates(board Board) (boards []Board) {
 	if board.player {
 		if board.BlackDiscCaptures() != 0 {
 			// Need to make this loop for continous captures
 			// I think I'm going to seperate the whole capture dealie into a seperate func
 			// Doing the captures recursively makes the most sense I think
-			// Maybe adding a flag to AlphaBeta to continue captures would work
-			// I'm going to let this be for now though
 			downLeftCaptures := DownLeftCaptureSource(board.blackDiscs, board.DownLeftBlackDiscCaptures())
 			downRightCaptures := DownRightCaptureSource(board.blackDiscs, board.DownRightBlackDiscCaptures())
 			for downLeftCaptures != 0 {
