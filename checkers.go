@@ -49,8 +49,7 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	//fmt.Println(AlphaBeta(b, int32(math.MinInt32), int32(math.MaxInt32), 9))
-	DetermineBestMove(b, uint8(10))
+	DetermineBestMove(b, uint8(1))
 }
 
 // So I could pass the last move as part of the struct, but that seems bloated so I'm just going to calculate the move that made this position a single time by diffing the two boards and working backwards.
@@ -67,9 +66,18 @@ func PosToHackerrank(pos uint) {
 
 // This is a hacky mess. I just want it to be over.
 func GenerateCaptureCoordinates(b1 Board, b2 Board) {
-	capturingPiece := ((b1.whitePieces ^ b2.whitePieces) & b1.whitePieces)
-	endPos := ((b1.whitePieces ^ b2.whitePieces) & b2.whitePieces)
-	capturedPieces := (b1.blackPieces ^ b2.blackPieces)
+	capturingPiece := uint32(0)
+	endPos := uint32(0)
+	capturedPieces := uint32(0)
+	if b1.player {
+		capturingPiece = ((b1.blackPieces ^ b2.blackPieces) & b1.blackPieces)
+		endPos = ((b1.blackPieces ^ b2.blackPieces) & b2.blackPieces)
+		capturedPieces = (b1.whitePieces ^ b2.whitePieces)
+	} else {
+		capturingPiece = ((b1.whitePieces ^ b2.whitePieces) & b1.whitePieces)
+		endPos = ((b1.whitePieces ^ b2.whitePieces) & b2.whitePieces)
+		capturedPieces = (b1.blackPieces ^ b2.blackPieces)
+	}
 
 	//printThese := make([]uint8, 10)
 	var printThese []uint8
@@ -85,21 +93,15 @@ func GenerateCaptureCoordinates(b1 Board, b2 Board) {
 			capturedPieces = capturedPieces &^ (1 << Bitscan(upRightCaptures))
 			capturingPiece = capturingPiece >> 7
 			printThese = append(printThese, Bitscan(capturingPiece))
-		}
-
-		if upLeftCaptures != 0 {
+		} else if upLeftCaptures != 0 {
 			capturedPieces = capturedPieces &^ (1 << Bitscan(upLeftCaptures))
 			capturingPiece = capturingPiece >> 9
 			printThese = append(printThese, Bitscan(capturingPiece))
-		}
-
-		if downLeftCaptures != 0 {
+		} else if downLeftCaptures != 0 {
 			capturedPieces = capturedPieces &^ (1 << Bitscan(downLeftCaptures))
 			capturingPiece = capturingPiece << 7
 			printThese = append(printThese, Bitscan(capturingPiece))
-		}
-
-		if downRightCaptures != 0 {
+		} else if downRightCaptures != 0 {
 			capturedPieces = capturedPieces &^ (1 << Bitscan(downRightCaptures))
 			capturingPiece = capturingPiece << 9
 			printThese = append(printThese, Bitscan(capturingPiece))
@@ -115,20 +117,18 @@ func GenerateMoveCoordinates(b1 Board, b2 Board) {
 	pos1 := uint(1)
 	pos2 := uint(1)
 	if b1.player {
-		if (b1.blackPieces ^ b2.blackPieces) != 0 {
-			for uint32(((b1.blackPieces^b2.blackPieces)&b1.blackPieces)>>pos1) != 0 {
-				pos1 += 1
-			}
-			for uint32(((b1.blackPieces^b2.blackPieces)&b2.blackPieces)>>pos2) != 0 {
-				pos2 += 1
-			}
-		} else {
-			for uint32(((b1.whitePieces^b2.whitePieces)&b1.whitePieces)>>pos1) != 0 {
-				pos1 += 1
-			}
-			for uint32(((b1.whitePieces^b2.whitePieces)&b2.whitePieces)>>pos2) != 0 {
-				pos2 += 1
-			}
+		for uint32(((b1.blackPieces^b2.blackPieces)&b1.blackPieces)>>pos1) != 0 {
+			pos1 += 1
+		}
+		for uint32(((b1.blackPieces^b2.blackPieces)&b2.blackPieces)>>pos2) != 0 {
+			pos2 += 1
+		}
+	} else {
+		for uint32(((b1.whitePieces^b2.whitePieces)&b1.whitePieces)>>pos1) != 0 {
+			pos1 += 1
+		}
+		for uint32(((b1.whitePieces^b2.whitePieces)&b2.whitePieces)>>pos2) != 0 {
+			pos2 += 1
 		}
 	}
 	fmt.Println("1")
@@ -140,13 +140,13 @@ func DetermineBestMove(b Board, depth uint8) {
 	nextBoards := make([]Board, 10)
 	var bestBoard Board
 	if b.player {
-		if b.BlackDiscCaptures() != 0 {
+		if b.BlackDiscCaptures() != 0 || b.BlackKingCaptures() != 0 {
 			nextBoards = NextCaptureBoardStates(b)
 		} else {
 			nextBoards = NextMoveBoardStates(b)
 		}
 	} else {
-		if b.WhiteDiscCaptures() != 0 {
+		if b.WhiteDiscCaptures() != 0 || b.WhiteKingCaptures() != 0 {
 			nextBoards = NextCaptureBoardStates(b)
 		} else {
 			nextBoards = NextMoveBoardStates(b)
@@ -172,21 +172,18 @@ func DetermineBestMove(b Board, depth uint8) {
 		}
 	}
 	if b.player {
-		if b.BlackDiscCaptures() != 0 {
+		if b.BlackDiscCaptures() != 0 || b.BlackKingCaptures() != 0 {
 			GenerateCaptureCoordinates(b, bestBoard)
 		} else {
 			GenerateMoveCoordinates(b, bestBoard)
 		}
 	} else {
-		if b.WhiteDiscCaptures() != 0 {
+		if b.WhiteDiscCaptures() != 0 || b.WhiteKingCaptures() != 0 {
 			GenerateCaptureCoordinates(b, bestBoard)
 		} else {
 			GenerateMoveCoordinates(b, bestBoard)
 		}
 	}
-	//PrintBoard(b)
-	//PrintBoard(bestBoard)
-	//fmt.Println(bestScore)
 }
 
 func NextMoveBoardStates(board Board) (boards []Board) {
