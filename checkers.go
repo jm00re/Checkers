@@ -65,46 +65,73 @@ func PosToHackerrank(pos uint) {
 	}
 }
 
+// This is a hacky mess. I just want it to be over.
 func GenerateCaptureCoordinates(b1 Board, b2 Board) {
+	capturingPiece := ((b1.whitePieces ^ b2.whitePieces) & b1.whitePieces)
+	endPos := ((b1.whitePieces ^ b2.whitePieces) & b2.whitePieces)
+	capturedPieces := (b1.blackPieces ^ b2.blackPieces)
 
+	//printThese := make([]uint8, 10)
+	var printThese []uint8
+	printThese = append(printThese, Bitscan(capturingPiece))
+
+	for capturingPiece != endPos {
+		downLeftCaptures := MoveDownLeft(Bitscan(capturingPiece), capturingPiece) & capturedPieces
+		downRightCaptures := MoveDownRight(Bitscan(capturingPiece), capturingPiece) & capturedPieces
+		upLeftCaptures := MoveUpLeft(Bitscan(capturingPiece), capturingPiece) & capturedPieces
+		upRightCaptures := MoveUpRight(Bitscan(capturingPiece), capturingPiece) & capturedPieces
+
+		if upRightCaptures != 0 {
+			capturedPieces = capturedPieces &^ (1 << Bitscan(upRightCaptures))
+			capturingPiece = capturingPiece >> 7
+			printThese = append(printThese, Bitscan(capturingPiece))
+		}
+
+		if upLeftCaptures != 0 {
+			capturedPieces = capturedPieces &^ (1 << Bitscan(upLeftCaptures))
+			capturingPiece = capturingPiece >> 9
+			printThese = append(printThese, Bitscan(capturingPiece))
+		}
+
+		if downLeftCaptures != 0 {
+			capturedPieces = capturedPieces &^ (1 << Bitscan(downLeftCaptures))
+			capturingPiece = capturingPiece << 7
+			printThese = append(printThese, Bitscan(capturingPiece))
+		}
+
+		if downRightCaptures != 0 {
+			capturedPieces = capturedPieces &^ (1 << Bitscan(downRightCaptures))
+			capturingPiece = capturingPiece << 9
+			printThese = append(printThese, Bitscan(capturingPiece))
+		}
+	}
+	fmt.Println(len(printThese) - 1)
+	for _, p := range printThese {
+		PosToHackerrank(uint(p))
+	}
 }
 
 func GenerateMoveCoordinates(b1 Board, b2 Board) {
 	pos1 := uint(1)
 	pos2 := uint(1)
 	if b1.player {
-		if (b1.blackKings ^ b2.blackKings) != 0 {
-			for uint32(((b1.blackKings^b2.blackKings)&b1.blackKings)>>pos1) != 0 {
+		if (b1.blackPieces ^ b2.blackPieces) != 0 {
+			for uint32(((b1.blackPieces^b2.blackPieces)&b1.blackPieces)>>pos1) != 0 {
 				pos1 += 1
 			}
-			for uint32(((b1.blackKings^b2.blackKings)&b2.blackKings)>>pos2) != 0 {
+			for uint32(((b1.blackPieces^b2.blackPieces)&b2.blackPieces)>>pos2) != 0 {
 				pos2 += 1
 			}
 		} else {
-			for uint32(((b1.blackDiscs^b2.blackDiscs)&b1.blackDiscs)>>pos1) != 0 {
+			for uint32(((b1.whitePieces^b2.whitePieces)&b1.whitePieces)>>pos1) != 0 {
 				pos1 += 1
 			}
-			for uint32(((b1.blackDiscs^b2.blackDiscs)&b2.blackDiscs)>>pos2) != 0 {
-				pos2 += 1
-			}
-		}
-	} else {
-		if (b1.blackKings ^ b2.blackKings) != 0 {
-			for uint32(((b1.whiteKings^b2.whiteKings)&b1.whiteKings)>>pos1) != 0 {
-				pos1 += 1
-			}
-			for uint32(((b1.whiteKings^b2.whiteKings)&b2.whiteKings)>>pos2) != 0 {
-				pos2 += 1
-			}
-		} else {
-			for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b1.whiteDiscs)>>pos1) != 0 {
-				pos1 += 1
-			}
-			for uint32(((b1.whiteDiscs^b2.whiteDiscs)&b2.whiteDiscs)>>pos2) != 0 {
+			for uint32(((b1.whitePieces^b2.whitePieces)&b2.whitePieces)>>pos2) != 0 {
 				pos2 += 1
 			}
 		}
 	}
+	fmt.Println("1")
 	PosToHackerrank(pos1 - 1)
 	PosToHackerrank(pos2 - 1)
 }
@@ -146,19 +173,19 @@ func DetermineBestMove(b Board, depth uint8) {
 	}
 	if b.player {
 		if b.BlackDiscCaptures() != 0 {
+			GenerateCaptureCoordinates(b, bestBoard)
 		} else {
-			fmt.Println("1")
 			GenerateMoveCoordinates(b, bestBoard)
 		}
 	} else {
 		if b.WhiteDiscCaptures() != 0 {
+			GenerateCaptureCoordinates(b, bestBoard)
 		} else {
-			fmt.Println("1")
 			GenerateMoveCoordinates(b, bestBoard)
 		}
 	}
-	PrintBoard(b)
-	PrintBoard(bestBoard)
+	//PrintBoard(b)
+	//PrintBoard(bestBoard)
 	//fmt.Println(bestScore)
 }
 
