@@ -443,9 +443,15 @@ func WhiteDiscPerformCaptures(move uint8, board Board) (boards []Board) {
 		// If non zero, recuse
 		continueDiscCaptures := WhiteDiscUpLeftCaptureSource(newBoard)&(1<<(move-9)) |
 			WhiteDiscUpRightCaptureSource(newBoard)&(1<<(move-9))
+		continueKingCaptures := WhiteKingDownLeftCaptureSource(newBoard)&(1<<(move-9)) |
+			WhiteKingDownRightCaptureSource(newBoard)&(1<<(move-9)) |
+			WhiteKingUpLeftCaptureSource(newBoard)&(1<<(move-9)) |
+			WhiteKingUpRightCaptureSource(newBoard)&(1<<(move-9))
 
 		if continueDiscCaptures != 0 {
 			boards = append(boards, WhiteDiscPerformCaptures((move-9), newBoard)...)
+		} else if continueKingCaptures != 0 {
+			boards = append(boards, WhiteKingPerformCaptures((move-9), newBoard)...)
 		} else {
 			board.NextPlayer()
 			boards = append(boards, newBoard)
@@ -458,15 +464,20 @@ func WhiteDiscPerformCaptures(move uint8, board Board) (boards []Board) {
 
 		continueDiscCaptures := WhiteDiscUpLeftCaptureSource(newBoard)&(1<<(move-7)) |
 			WhiteDiscUpRightCaptureSource(newBoard)&(1<<(move-7))
+		continueKingCaptures := WhiteKingDownLeftCaptureSource(newBoard)&(1<<(move-7)) |
+			WhiteKingDownRightCaptureSource(newBoard)&(1<<(move-7)) |
+			WhiteKingUpLeftCaptureSource(newBoard)&(1<<(move-7)) |
+			WhiteKingUpRightCaptureSource(newBoard)&(1<<(move-7))
 
 		if continueDiscCaptures != 0 {
 			boards = append(boards, WhiteDiscPerformCaptures((move-7), newBoard)...)
+		} else if continueKingCaptures != 0 {
+			boards = append(boards, WhiteKingPerformCaptures((move-7), newBoard)...)
 		} else {
 			board.NextPlayer()
 			boards = append(boards, newBoard)
 		}
 	}
-
 	return boards
 }
 
