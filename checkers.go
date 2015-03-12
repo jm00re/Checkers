@@ -49,7 +49,7 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	DetermineBestMove(b, uint8(8))
+	DetermineBestMove(b, uint8(10))
 }
 
 // So I could pass the last move as part of the struct, but that seems bloated so I'm just going to calculate the move that made this position a single time by diffing the two boards and working backwards.
@@ -141,19 +141,16 @@ func DetermineBestMove(b Board, depth uint8) {
 	if b.player {
 		if b.BlackDiscCaptures() != 0 || b.BlackKingCaptures() != 0 {
 			nextBoards = NextCaptureBoardStates(b)
-			depth = 1
 		} else {
 			nextBoards = NextMoveBoardStates(b)
 		}
 	} else {
 		if b.WhiteDiscCaptures() != 0 || b.WhiteKingCaptures() != 0 {
 			nextBoards = NextCaptureBoardStates(b)
-			depth = 1
 		} else {
 			nextBoards = NextMoveBoardStates(b)
 		}
 	}
-
 	bestScore := AlphaBeta(nextBoards[0], int32(math.MinInt32), int32(math.MaxInt32), depth)
 	if b.player {
 		for _, board := range nextBoards {
@@ -742,11 +739,16 @@ func AlphaBeta(board Board, alpha int32, beta int32, depth uint8) int32 {
 
 func (b Board) EvalBoard() int32 {
 	blackScore := 3*int32(PopCount(b.blackDiscs)) + 5*int32(PopCount(b.blackKings)) +
-		int32(PopCount(b.BlackDiscMoves()))
+		int32(PopCount(b.BlackDiscMoves())) + int32(PopCount(b.BlackKingMoves()))
 	whiteScore := 3*int32(PopCount(b.whiteDiscs)) + 5*int32(PopCount(b.whiteKings)) +
-		int32(PopCount(b.WhiteDiscMoves()))
-
-	return blackScore - whiteScore
+		int32(PopCount(b.WhiteDiscMoves())) + int32(PopCount(b.WhiteKingMoves()))
+	if b.blackPieces == 0 {
+		return math.MinInt32
+	} else if b.whitePieces == 0 {
+		return math.MaxInt32
+	} else {
+		return blackScore - whiteScore
+	}
 }
 
 func (b Board) CopyBoard() (newBoard Board) {
