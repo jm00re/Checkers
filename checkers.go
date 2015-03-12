@@ -49,7 +49,7 @@ func main() {
 	// Bitmask declaration
 	player, board := ReadBoard()
 	b := GenerateBoard(player, board)
-	DetermineBestMove(b, uint8(10))
+	DetermineBestMove(b, uint8(1))
 }
 
 // So I could pass the last move as part of the struct, but that seems bloated so I'm just going to calculate the move that made this position a single time by diffing the two boards and working backwards.
@@ -355,10 +355,10 @@ func BlackDiscPerformCaptures(move uint8, board Board) (boards []Board) {
 }
 
 func BlackKingPerformCaptures(move uint8, board Board) (boards []Board) {
-	downLeftCaptures := BlackKingDownLeftCaptureSource(board)
-	downRightCaptures := BlackKingDownRightCaptureSource(board)
-	upLeftCaptures := BlackKingUpLeftCaptureSource(board)
-	upRightCaptures := BlackKingUpRightCaptureSource(board)
+	downLeftCaptures := BlackKingDownLeftCaptureSource(board) & (1 << move)
+	downRightCaptures := BlackKingDownRightCaptureSource(board) & (1 << move)
+	upLeftCaptures := BlackKingUpLeftCaptureSource(board) & (1 << move)
+	upRightCaptures := BlackKingUpRightCaptureSource(board) & (1 << move)
 
 	for downLeftCaptures != 0 {
 		newBoard := board.CopyBoard()
@@ -433,8 +433,8 @@ func BlackKingPerformCaptures(move uint8, board Board) (boards []Board) {
 }
 
 func WhiteDiscPerformCaptures(move uint8, board Board) (boards []Board) {
-	upLeftCaptures := WhiteDiscUpLeftCaptureSource(board)
-	upRightCaptures := WhiteDiscUpRightCaptureSource(board)
+	upLeftCaptures := WhiteDiscUpLeftCaptureSource(board) & (1 << move)
+	upRightCaptures := WhiteDiscUpRightCaptureSource(board) & (1 << move)
 
 	for upLeftCaptures != 0 {
 		newBoard := board.CopyBoard()
@@ -443,6 +443,8 @@ func WhiteDiscPerformCaptures(move uint8, board Board) (boards []Board) {
 		// If non zero, recuse
 		continueDiscCaptures := WhiteDiscUpLeftCaptureSource(newBoard)&(1<<(move-9)) |
 			WhiteDiscUpRightCaptureSource(newBoard)&(1<<(move-9))
+
+		//PrintBitBoard(WhiteDiscUpRightCaptureSource(newBoard) & (1 << (move - 9)))
 		continueKingCaptures := WhiteKingDownLeftCaptureSource(newBoard)&(1<<(move-9)) |
 			WhiteKingDownRightCaptureSource(newBoard)&(1<<(move-9)) |
 			WhiteKingUpLeftCaptureSource(newBoard)&(1<<(move-9)) |
@@ -482,10 +484,10 @@ func WhiteDiscPerformCaptures(move uint8, board Board) (boards []Board) {
 }
 
 func WhiteKingPerformCaptures(move uint8, board Board) (boards []Board) {
-	downLeftCaptures := WhiteKingDownLeftCaptureSource(board)
-	downRightCaptures := WhiteKingDownRightCaptureSource(board)
-	upLeftCaptures := WhiteKingUpLeftCaptureSource(board)
-	upRightCaptures := WhiteKingUpRightCaptureSource(board)
+	downLeftCaptures := WhiteKingDownLeftCaptureSource(board) & (1 << move)
+	downRightCaptures := WhiteKingDownRightCaptureSource(board) & (1 << move)
+	upLeftCaptures := WhiteKingUpLeftCaptureSource(board) & (1 << move)
+	upRightCaptures := WhiteKingUpRightCaptureSource(board) & (1 << move)
 
 	for downLeftCaptures != 0 {
 		newBoard := board.CopyBoard()
